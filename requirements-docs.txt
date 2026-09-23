@@ -7,6 +7,15 @@
 #   uvx --with-requirements requirements-docs.txt zensical serve   # ② 本地预览（默认 8000）
 #   uvx --with-requirements requirements-docs.txt zensical build --strict --clean
 #
+# ⚠️ 国内镜像会 403 时怎么办：
+#   本机构了清华源（pip.ini 里 global.index-url），但那个源当前对**所有**请求
+#   返回 403（curl 根索引也是 403），于是 uvx 报的错很有误导性：
+#     "zensical was not found in the package registry … An index URL … returned a 403"
+#   —— 它像是在说「没有这个包」，实际是镜像挂了。官方源正常（HTTP 200）。
+#   临时绕过（只对本次命令生效，不改你的全局配置）：
+#     UV_DEFAULT_INDEX=https://pypi.org/simple uvx --with-requirements requirements-docs.txt …
+#   CI 不受影响：GitHub runner 默认走官方源。
+#
 # CI 在推送到 main 时跑同样三步并部署到 Pages，见 .github/workflows/docs.yml。
 #
 # 为什么是 Zensical：它是 Material for MkDocs 的官方继任者（同一团队 squidfunk）。

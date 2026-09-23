@@ -35,7 +35,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # ⚠️ enablement: true 不是可选项，是必需的。
+      #    本仓库的第一次构建就死在这里（6 秒即失败）：
+      #      [error] Get Pages site failed. Please verify that the repository has
+      #      Pages enabled and configured to build using GitHub Actions
+      #   原因：推送那一刻 Pages 尚未启用（我是用 API 事后启用的，Concurrent 竞态），
+      #   而不带 enablement 的 configure-pages 遇到没启用的仓库就直接报错退出。
+      #   加上它会自己把 Pages 建起来 —— 后续任何人克隆这个模板都不用先去点设置。
       - uses: actions/configure-pages@v6
+        with:
+          enablement: true
       - uses: actions/checkout@v7
 
       # ⚠️ 这里是精确版本，不是 @v10 —— 该 action 不发布浮动的主版本标签
