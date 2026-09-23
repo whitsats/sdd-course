@@ -1,0 +1,68 @@
+# rulesmith 的 SDD 门禁 —— spec-as-source 模式
+#
+# 与 taskflow 的最大差别：
+#   taskflow 校验的是「代码是否满足规格」（契约测试）
+#   rulesmith 校验的是「产物是否由规格生成」（可复现性）
+#
+# 后者可以做**字节级**判定，比前者强得多 ——
+# 因为生成关系是确定性的，而「代码是否满足规格」永远需要人判断断言写对没有。
+
+name: SDD Gate (rulesmith)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: examples/rulesmith
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # ── 门禁 ① 生成物可复现性（阻断）──────────────────────────────────
+      # 脚本会：先快照 → 重新生成 → 对比快照 → 再校验 git 是否干净。
+      # 顺序不能反！先重新生成再检测，会把手工修改**静默覆盖**掉然后报「通过」。
+      - name: 生成物可复现性（检测手改与过期）
+        working-directory: .
+        run: bash scripts/verify-generated.sh examples/rulesmith "node tools/generator/index.ts" src/generated
+
+      # ── 门禁 ② 快速路径：--check 不需要 git（阻断）─────────────────────
+      # 与 ① 互补：① 能抓「改了 spec 没提交产物」，② 只比较内容。
+      # 两条都保留的理由：② 在本地能秒级跑，① 需要 git 上下文。
+      - name: 生成物一致性（快速路径）
+        run: node tools/generator/index.ts --check
+
+      # ── 门禁 ③ 生成器自身测试（阻断）────────────────────────────────────
+      # 生成器是**手写代码**，是整个链路里唯一没有上一层保障的部分。
+      - name: 生成器自身测试
+        run: node --test tests/generator.spec.ts
+
+      # ── 门禁 ④ 产物行为测试 + 规格示例自检（阻断）────────────────────────
+      # 包含「规格自带的示例必须通过自己的语法」这条 —— 它抓的是
+      # 「文档与语法静默脱节」这类错误，生成器本身抓不到。
+      - name: 产物行为测试
+        run: node --test tests/validator.spec.ts
+
+      # ── 门禁 ⑤ 分层边界（非阻断，但会打印警告）──────────────────────────
+      # 生成产物禁止被 src/ 里其他文件跨层引用（只能通过 index 门面）。
+      - name: 分层边界检查
+        working-directory: .
+        continue-on-error: true
+        run: bash scripts/check-layer-boundary.sh examples/rulesmith
+
+      # ── 摘要（无论成败都打印，便于排查）──────────────────────────────────
+      - name: 生成摘要（总在最后打印）
+        if: always()
+        run: node tools/generator/index.ts --check || true

@@ -1,0 +1,155 @@
+# 讲义站点（GitHub Pages）
+#
+# 生成器用 Zensical —— Material for MkDocs 的官方继任者（同一团队，squidfunk）。
+# 换掉 mkdocs-material 的原因：它已定于 2026-11-05 EOL，9.7.0 是最后一版；
+# 底层 MkDocs 1.x 自 2024 年 8 月起无人维护；且 MkDocs 2.0 明确「没有迁移路径」。
+#
+# docs_dir 指向 site-src/ —— 那是构建时拼出来的临时目录，不是仓库里的源文件。
+# 所以动手前必须先跑拼装脚本：
+#
+#   python tools/build_site.py
+#   uvx --with-requirements requirements-docs.txt zensical serve          # 本地预览
+#   uvx --with-requirements requirements-docs.txt zensical build --strict --clean
+#
+# ⚠️ docs_dir 不能写成点开头的目录（如 .site-src）：Zensical 会跳过隐藏目录，
+#    结果构建「成功」、产出 0 页、而且一句警告都不报。实测踩过，别改回去。
+#
+# CI 在推送到 main 时做同样的事并部署，见 .github/workflows/docs.yml。
+
+[project]
+site_name = "SDD 实战精修课"
+site_description = "从 vibe coding 到规格驱动 —— 13 节讲义 + 3 个递进案例 + 全部真实产物"
+site_url = "https://whitsats.github.io/sdd-course/"
+repo_url = "https://github.com/whitsats/sdd-course"
+repo_name = "whitsats/sdd-course"
+
+docs_dir = "site-src"
+site_dir = "site-out"
+
+# ⚠️ 导航必须覆盖 site-src/ 里的每一页。漏掉的页面会触发
+#    「exists in the docs directory, but is not included in the nav」警告，
+#    在 --strict 下就是构建失败 —— 这条约束是有意的：它保证没有页面成为孤岛。
+nav = [
+  { "开始" = "index.md" },
+  { "学习计划（时间与取舍）" = "plan.md" },
+  { "一 · 心智模型（先想清楚，再动手）" = [
+      { "00 环境准备与首次空跑" = "lessons/00-setup.md" },
+      { "01 为什么是 SDD ★" = "lessons/01-why-sdd.md" },
+      { "02 Constitution：给项目立宪" = "lessons/02-constitution.md" },
+  ] },
+  { "二 · 项目 A focuslog（spec-first）" = [
+      { "03 Specify：把意图写成规格" = "lessons/03-specify.md" },
+      { "04 Plan & Tasks：方案与原子拆解" = "lessons/04-plan-tasks.md" },
+      { "05 Implement 与手工验收 ★" = "lessons/05-implement.md" },
+  ] },
+  { "三 · 项目 B taskflow（spec-anchored）" = [
+      { "06 Clarify & Checklist：把歧义清零" = "lessons/06-clarify-checklist.md" },
+      { "07 架构与契约规格：让 plan 有牙齿 ★" = "lessons/07-architecture-contracts.md" },
+      { "08 Analyze 与分批实现" = "lessons/08-analyze-implement.md" },
+      { "09 Converge 与漂移治理 ★" = "lessons/09-converge-drift.md" },
+  ] },
+  { "四 · 项目 C rulesmith（spec-as-source）" = [
+      { "10 Spec-as-Source：当人只改规格 ★" = "lessons/10-spec-as-source.md" },
+  ] },
+  { "五 · 落地" = [
+      { "11 存量改造：给已有仓库补规格" = "lessons/11-brownfield.md" },
+      { "12 团队化落地与生态选型" = "lessons/12-team-rollout.md" },
+  ] },
+  { "参考" = [
+      { "EARS 句式速查" = "reference/ears.md" },
+      { "术语表 · 中英对照" = "reference/glossary.md" },
+      { "反模式清单" = "reference/anti-patterns.md" },
+      { "工具脚本（门禁 × 5 + 审阅器）" = "scripts/index.md" },
+      { "Agnes API 速查（实测）" = "reference/agnes-api.md" },
+      { "案例项目设计说明" = "projects/index.md" },
+      { "模板库（11 份，可直接拷用）" = [
+          "templates/index.md",
+          "templates/constitution-template.md",
+          "templates/spec-template.md",
+          "templates/plan-template.md",
+          "templates/tasks-template.md",
+          "templates/adr-template.md",
+          "templates/clarify-log-template.md",
+          "templates/acceptance-record-template.md",
+          "templates/change-request-template.md",
+          "templates/notes-template.md",
+          "templates/agent-prompt-snippets.md",
+          "templates/PR-template.md",
+      ] },
+  ] },
+  { "完整产物示例（三个项目）" = [
+      { "总览：三个项目与它们的严谨度等级" = "examples/index.md" },
+      { "A · focuslog（Python CLI · spec-first）" = [
+          "examples/focuslog/index.md",
+          "examples/focuslog/memory/constitution.md",
+          "examples/focuslog/specs/001-focuslog-mvp/spec.md",
+          "examples/focuslog/specs/001-focuslog-mvp/plan.md",
+          "examples/focuslog/specs/001-focuslog-mvp/tasks.md",
+          "examples/focuslog/docs/adr/ADR-001-存储选型.md",
+          "examples/focuslog/docs/验收标准-测试映射.md",
+          "examples/focuslog/notes/L05-验收记录.md",
+          "examples/focuslog/notes/L06-LLM审阅记录.md",
+      ] },
+      { "B · taskflow（TS API · spec-anchored）" = [
+          "examples/taskflow/index.md",
+          "examples/taskflow/specs/001-taskflow-mvp/spec.md",
+          "examples/taskflow/specs/001-taskflow-mvp/plan.md",
+          "examples/taskflow/specs/002-task-tags/spec.md",
+          "examples/taskflow/docs/adr/ADR-002-并发冲突策略.md",
+          "examples/taskflow/docs/验收标准-测试映射.md",
+          "examples/taskflow/notes/L08-feature切换.md",
+          "examples/taskflow/notes/L09-不收敛分流.md",
+          "examples/taskflow/notes/L09-规格变更.md",
+          "examples/taskflow/notes/L09-成本账.md",
+      ] },
+      { "C · rulesmith（规格即源 · 生成器驱动）" = [
+          "examples/rulesmith/index.md",
+          "examples/rulesmith/specs/001-rulesmith-dsl/spec.md",
+          "examples/rulesmith/specs/001-rulesmith-dsl/plan.md",
+          "examples/rulesmith/docs/rules-dsl.md",
+          "examples/rulesmith/docs/验收标准-测试映射.md",
+          "examples/rulesmith/notes/L10-只改spec演示.md",
+          "examples/rulesmith/notes/L10-边界感.md",
+      ] },
+  ] },
+]
+
+[project.theme]
+# classic = 保留 Material for MkDocs 的外观（Zensical 自带的主题变体）
+variant = "classic"
+language = "zh"
+features = [
+  "navigation.tracking",
+  "navigation.top",
+  "navigation.footer",
+  "navigation.instant",
+  "content.code.copy",
+  "content.tooltips",
+  "search.highlight",
+]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "切到深色"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "切到浅色"
+
+[project.markdown_extensions]
+admonition = {}
+attr_list = {}
+def_list = {}
+footnotes = {}
+md_in_html = {}
+tables = {}
+toc.permalink = true
+pymdownx.details = {}
+pymdownx.highlight = {}
+pymdownx.inlinehilite = {}
+pymdownx.superfences = {}
+pymdownx.tasklist.custom_checkbox = true

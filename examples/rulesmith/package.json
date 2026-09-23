@@ -1,0 +1,19 @@
+{
+  "name": "rulesmith",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "报表规则 DSL —— L10 spec-as-source 演示项目。规格是唯一真相源，产物由生成器发射。",
+  "engines": {
+    "node": ">=23"
+  },
+  "scripts": {
+    "generate": "node tools/generator/index.ts",
+    "check": "node tools/generator/index.ts --check",
+    "test": "node --test tests/",
+    "verify": "node tools/generator/index.ts --check && node --test tests/",
+    "gate": "bash ../../scripts/verify-generated.sh . \"pnpm generate\" src/generated"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -1,0 +1,96 @@
+# SDD 门禁 · taskflow
+#
+# 设计原则（L09 §3）：
+#   只把「确定性失败」设成阻断门禁。概率性失败（性能）只警告。
+#   理由：随机红灯的必然结局是团队把门禁关掉，然后连其他门禁一起失去。
+#
+# 门禁范围（L09 §3 表格）：
+#   该阻断：契约测试、类型检查、映射表覆盖率、分层边界
+#   不该阻断：内部重构、日志措辞、变量命名、性能抖动
+
+name: sdd-gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: taskflow_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://postgres:test@localhost:5432/taskflow_test
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # 供变更热点脚本使用
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: 应用迁移
+        run: pnpm migrate up
+
+      # ── ① 类型约束层（阻断）─────────────────────────────────────
+      - name: Type check
+        run: pnpm tsc --noEmit
+
+      # ── ② 契约测试层（阻断）────────────────────────────────────
+      - name: Contract tests
+        run: pnpm vitest run --project contract
+
+      # ── ③ 映射表覆盖率（阻断）★ 这是 spec-anchored 的标志性门禁 ──
+      #    没有这一步，spec-first 和 spec-anchored 就没有区别。
+      #    它把「每条验收标准都要有测试」从人的自觉变成机器强制。
+      - name: Spec coverage
+        run: bash scripts/check-spec-coverage.sh .
+
+      # ── ④ 分层边界（阻断）──────────────────────────────────────
+      #    把宪法「架构边界」这一条从 code review 变成机械检查。
+      - name: Layer boundary check
+        run: bash scripts/check-layer-boundary.sh .
+
+      # ── ⑤ 性能基准（只警告）────────────────────────────────────
+      #    ⚠️ 刻意不阻断：共享 runner 抖动会导致随机红灯。
+      #    门禁的价值建立在「红灯必有意义」之上。
+      - name: Perf baseline
+        run: pnpm vitest run --project perf
+        continue-on-error: true
+
+      - name: 性能结果提示
+        if: steps.perf.outcome == 'failure'
+        run: echo "::warning::性能基准超标（不阻断）。如持续超标，需回 spec 重新评估性能预算。"
+
+      # ── ⑥ 规格同步检查（PR 专用，提示性）───────────────────────
+      #    宪法第 7 条：行为变更必须同步更新 spec。
+      #    用提示而非阻断：机械判断「这次改动是否改变对外行为」容易误判，误判会造成随机红灯。
+      - name: 行为变更是否同步了 spec
+        if: github.event_name == 'pull_request'
+        run: |
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          CODE_CHANGED=$(echo "$CHANGED" | grep -E '^src/(routes|domain)/' || true)
+          SPEC_CHANGED=$(echo "$CHANGED" | grep -E '^specs/.*/spec\.md$' || true)
+          if [ -n "$CODE_CHANGED" ] && [ -z "$SPEC_CHANGED" ]; then
+            echo "::notice::路由或领域层有改动，但 spec.md 未变。请确认本次改动未影响对外行为；若影响了，请先改 spec。"
+          fi

@@ -1,0 +1,23 @@
+# 统一行尾：仓库里一律 LF。
+#
+# 为什么必须显式声明（不声明就是一颗定时炸弹）：
+# 本机 core.autocrlf=true，检出时会给所有文本文件加上 CRLF。
+# 于是 Windows 上改一行 scripts/*.sh，就可能把 CRLF 一起提交进去；
+# 到了 Linux CI 上，失败信息长这样：
+#
+#   bash: scripts/run-all-gates.sh: /usr/bin/env: bad interpreter: No such file or directory
+#   scripts/run-all-gates.sh: line 12: $'\r': command not found
+#
+# 第一条会让人去查 shebang，第二条会让人去查引号 —— 都没问题，问题在行尾。
+# 声明 eol=lf 之后，无论在哪个平台检出，shell 脚本都是 LF。
+* text=auto eol=lf
+
+# 明确二进制，避免 Git 试图做行尾转换而损坏文件
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary

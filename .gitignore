@@ -1,0 +1,32 @@
+# ── 文档站点的构建产物（由 tools/build_site.py 与 zensical 生成）──
+# 仓库里始终只有一份原文；site-src/ 是拼出来的，不要提交，否则会出现两套文档
+site-src/
+site-out/
+.cache/
+
+# ── Agent 工具的本地状态 ──────────────────────────────────────
+.freebuff/
+
+# ── 密钥：绝不入库 ───────────────────────────────────────────
+# scripts/agnes-review.py 只从环境变量读 AGNES_API_KEY，不写文件；
+# 这条兜底是为了防止以后有人图省事把 key 落到 .env 里。
+.env
+.env.local
+*.env
+!*.env.example
+
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ── Node（examples/rulesmith 用 node --test 跑，不装依赖）──────
+node_modules/
+
+# ── 编辑器 / 系统 ────────────────────────────────────────────
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
