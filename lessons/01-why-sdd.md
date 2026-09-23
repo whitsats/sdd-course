@@ -229,7 +229,7 @@ specify  ──►  clarify  ──►  plan  ──►  checklist  ──►  t
 3. 「我们要求代码高质量、注释完整」——这句话放进宪法算合格吗？为什么？
 4. 你的规格里写了「用 Fastify 实现接口」。这句话应该在哪个阶段出现？写错阶段会造成什么后果？
 
-<details>
+<details markdown="1">
 <summary>答案</summary>
 
 1. **约束力**：SDD 规格是可执行的——偏离会让测试失败。这一点决定了它不会腐烂。

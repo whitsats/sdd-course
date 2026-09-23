@@ -87,4 +87,4 @@ bash scripts/check-layer-boundary.sh examples/taskflow ts
 
 分层脚本值得单独试一次：往 `src/domain/state-machine.ts` 里加一行
 `import fastify from "fastify"`，然后看它变红。**加在注释里不会变红** ——
-这个区别是脚本被人改过两轮的产物，理由见 [scripts/index.md](../../scripts/index.md)。
+这个区别是脚本被人改过两轮的产物，理由见 [scripts/index.md](../../scripts/README.md)。

@@ -11,7 +11,7 @@ on:
       - "projects/**"
       - "templates/**"
       - "examples/**/*.md"
-      - "scripts/**/*.md"
+      - "scripts/**"
       - "README.md"
       - "PLAN.md"
       - "zensical.toml"
@@ -64,6 +64,13 @@ jobs:
       # 讲义改了标题忘了改导航、或新增页面忘了挂进 zensical.toml，构建直接红。
       - name: 构建站点
         run: uvx --with-requirements requirements-docs.txt zensical build --strict --clean
+
+      # 上线前的最后一道闸：折叠块里的 markdown 真的被解析了吗。
+      # 这一条踩过的坑是「构建 ✅ 通过 → 产物 ✅ 生成 → CI ✅ 全绿 →
+      # 页面上是一整块没格式的文本」—— 构建链上没有任何环节会报警。
+      # 放在 upload 之前，坏页面就不会被发布出去。
+      - name: 渲染完整性（折叠块）
+        run: bash scripts/check-rendering.sh --site
 
       - uses: actions/upload-pages-artifact@v5
         with:

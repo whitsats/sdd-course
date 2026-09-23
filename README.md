@@ -136,6 +136,7 @@ SDD（Spec-Driven Development，规范驱动开发）是对这套问题的系统
 │   ├── check-layer-boundary.sh  把宪法架构边界变成 CI 检查
 │   ├── find-change-hotspots.sh  存量改造：决定给哪些模块补规格
 │   ├── verify-generated.sh      spec-as-source 的可复现性守卫
+│   ├── check-rendering.sh       折叠块真的被解析（构建绿但页面坏）
 │   └── agnes-review.py          用 LLM 对规格做对抗式审阅
 └── projects/
     └── README.md          三个案例项目的设计说明
@@ -148,14 +149,15 @@ SDD（Spec-Driven Development，规范驱动开发）是对这套问题的系统
 >
 > ```bash
 > bash scripts/run-all-gates.sh
-> # ① 门禁脚本自身可执行      ✔ ×5
+> # ① 门禁脚本自身可执行      ✔ ×6
 > # ② 验收标准覆盖率          ✔ focuslog / taskflow / rulesmith
 > # ③ 分层边界                ✔ taskflow / focuslog
 > # ④ 生成物可复现性          ✔ rulesmith
 > # ⑤ 测试套件                ✔ 67 pass / 0 fail
 > # ⑥ 密钥泄漏自查            ✔
-> # ⑦ 文档内部链接            ✔
-> # 总结  通过 14   失败 0   ✅ 全部门禁通过
+> # ⑦ 渲染完整性              ✔ 12 个折叠块
+> # ⑧ 文档内部链接            ✔
+> # 总结  通过 16   失败 0   ✅ 全部门禁通过
 > ```
 >
 > 也可以单独跑某一个：
