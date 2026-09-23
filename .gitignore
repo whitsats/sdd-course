@@ -25,6 +25,11 @@ venv/
 # ── Node（examples/rulesmith 用 node --test 跑，不装依赖）──────
 node_modules/
 
+# ── Java / Maven（examples/billflow 用 mvn verify 跑门禁）─────
+# target/ 是构建产物：class 文件、测试报告、jar。
+# 它和 site-src/ 是同一类东西 —— 仓库里只保留源，产物由构建生成。
+target/
+
 # ── 编辑器 / 系统 ────────────────────────────────────────────
 .idea/
 .vscode/

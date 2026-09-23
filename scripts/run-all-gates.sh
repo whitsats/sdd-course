@@ -20,7 +20,9 @@ QUIET=0
 
 PASS=0
 FAIL=0
+SKIP=0
 declare -a FAILED_NAMES=()
+declare -a SKIPPED_NAMES=()
 
 # ── 输出工具 ──────────────────────────────────────────────────────────────
 say()  { [ "$QUIET" = 1 ] || printf '%s\n' "$*"; }
@@ -41,6 +43,28 @@ gate() {
       printf '%s\n' "$out" | sed 's/^/      /' | tail -12
     fi
   fi
+}
+
+# gate_soft <名称> <必需命令> <命令...>
+#
+# 用于「依赖可选工具链」的门禁（本项目里是 JDK/Maven）。它做一件事，而且只做一件事：
+#   **工具链缺失时把跳过摆到台面上**，而不是让它从「通过」里静静消失。
+#
+# 为什么单独写一个函数，而不是在调用处 if 一下：
+#   在调用处写 if，跳过就只是一个 printf —— 它不计入任何统计，总结行依然说「全绿」。
+#   于是「没跑」与「跑过了」在输出上长得一模一样。这是本项目反复踩到的同一类问题：
+#   **门禁最危险的失效不是报错，是沉默。**
+#   所以跳过必须计入 SKIP，并在总结里单独占一行。
+gate_soft() {
+  local name="$1"; shift
+  local requires="$1"; shift
+  if ! command -v "$requires" >/dev/null 2>&1; then
+    SKIP=$((SKIP + 1))
+    SKIPPED_NAMES+=("$name（未找到 $requires）")
+    printf '  \033[33m○\033[0m %s —— 跳过：未找到 %s\n' "$name" "$requires"
+    return 0
+  fi
+  gate "$name" "$@"
 }
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -91,8 +115,16 @@ if command -v node >/dev/null 2>&1; then
   gate "测试：rulesmith（生成器 + 产物，含幂等性与构建期校验）" \
     bash -c 'cd examples/rulesmith && node --test tests/*.spec.ts'
 else
-  say "  \033[33m·\033[0m 跳过（未找到 node ≥ 23）"
+  SKIP=$((SKIP + 1))
+  SKIPPED_NAMES+=("测试：rulesmith（未找到 node）")
+  say "  \033[33m○\033[0m 测试：rulesmith —— 跳过：未找到 node"
 fi
+
+# 项目 D（L13）：Java 侧的四层约束全部在 mvn verify 里 ——
+# 编译期规格校验（注解处理器）+ ArchUnit 架构检查 + 751 个测试 + 构造器不变量。
+# 它依赖 JDK 17 与 Maven，所以用 gate_soft：缺工具链时明确跳过，而不是假装通过。
+gate_soft "测试：billflow（Java 编译期规格校验 + 架构 + 751 测试）" mvn \
+  bash -c 'cd examples/billflow && MAVEN_OPTS="-Dfile.encoding=UTF-8" mvn -q -B verify'
 
 # ══════════════════════════════════════════════════════════════════════════
 head "⑥ 密钥泄漏自查"
@@ -136,7 +168,13 @@ gate "链接校验" bash -c '
 
 # ══════════════════════════════════════════════════════════════════════════
 printf '\n\033[1m总结\033[0m\n'
-printf '  通过 %d   失败 %d\n' "$PASS" "$FAIL"
+printf '  通过 %d   失败 %d   跳过 %d\n' "$PASS" "$FAIL" "$SKIP"
+
+if [ "$SKIP" -gt 0 ]; then
+  printf '  跳过项（**不等于通过**，只是本机没装对应工具链）：\n'
+  for n in "${SKIPPED_NAMES[@]}"; do printf '    - %s\n' "$n"; done
+fi
+
 if [ "$FAIL" -gt 0 ]; then
   printf '  失败项：\n'
   for n in "${FAILED_NAMES[@]}"; do printf '    - %s\n' "$n"; done
@@ -145,5 +183,9 @@ if [ "$FAIL" -gt 0 ]; then
   exit 1
 fi
 
-printf '  \033[32m✅ 全部门禁通过\033[0m\n'
+if [ "$SKIP" -gt 0 ]; then
+  printf '  \033[32m✅ 已跑的门禁全部通过\033[0m（有 %d 项跳过，装齐工具链后重跑）\n' "$SKIP"
+else
+  printf '  \033[32m✅ 全部门禁通过\033[0m\n'
+fi
 exit 0

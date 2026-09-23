@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  spec-guard —— 编译期守卫
+
+  它只依赖 JDK 自带的注解处理 API（javax.annotation.processing、javax.lang.model），
+  **没有任何第三方依赖**。这不是巧合：一个参与每次编译的东西，依赖越少越可靠，
+  而且它必须在构建的最早期就可用（它比业务模块先编译）。
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>dev.billflow</groupId>
+    <artifactId>billflow</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>spec-guard</artifactId>
+  <name>spec-guard</name>
+  <description>把规格编号变成编译器认识的符号</description>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <!-- 本模块自己不需要注解处理（它提供处理器，不使用它）。
+               显式关掉可以提速，也避免将来有人误以为这里的处理器在自我校验。 -->
+          <proc>none</proc>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

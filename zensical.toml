@@ -55,11 +55,14 @@ nav = [
       { "11 存量改造：给已有仓库补规格" = "lessons/11-brownfield.md" },
       { "12 团队化落地与生态选型" = "lessons/12-team-rollout.md" },
   ] },
+  { "六 · 可选进阶（Java · 约束前移）" = [
+      { "13 把约束前移到构建期 ★" = "lessons/13-java-build-time.md" },
+  ] },
   { "参考" = [
       { "EARS 句式速查" = "reference/ears.md" },
       { "术语表 · 中英对照" = "reference/glossary.md" },
       { "反模式清单" = "reference/anti-patterns.md" },
-      { "工具脚本（门禁 × 5 + 审阅器）" = "scripts/index.md" },
+      { "门禁脚本 × 6 + 规格审阅器" = "scripts/index.md" },
       { "Agnes API 速查（实测）" = "reference/agnes-api.md" },
       { "案例项目设计说明" = "projects/index.md" },
       { "模板库（11 份，可直接拷用）" = [
@@ -101,6 +104,14 @@ nav = [
           "examples/taskflow/notes/L09-不收敛分流.md",
           "examples/taskflow/notes/L09-规格变更.md",
           "examples/taskflow/notes/L09-成本账.md",
+      ] },
+      { "D · billflow（Java · 约束前移到构建期）" = [
+          "examples/billflow/index.md",
+          "examples/billflow/specs/001-billing-mvp/spec.md",
+          "examples/billflow/specs/001-billing-mvp/plan.md",
+          "examples/billflow/docs/adr/ADR-003-金额精度与取整.md",
+          "examples/billflow/docs/验收标准-测试映射.md",
+          "examples/billflow/notes/L13-构建期强制.md",
       ] },
       { "C · rulesmith（规格即源 · 生成器驱动）" = [
           "examples/rulesmith/index.md",

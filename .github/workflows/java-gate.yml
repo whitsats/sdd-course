@@ -1,0 +1,49 @@
+name: java-gate
+
+# 项目 D（L13）的门禁：编译期规格校验 + ArchUnit 架构检查 + 测试。
+#
+# 只盯 examples/billflow —— 改讲义或其它案例不该触发这个作业（也就不会占用构建资源）。
+on:
+  push:
+    branches: [main]
+    paths:
+      - "examples/billflow/**"
+      - "scripts/check-spec-coverage.sh"
+      - ".github/workflows/java-gate.yml"
+  pull_request:
+    paths:
+      - "examples/billflow/**"
+      - "scripts/check-spec-coverage.sh"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # JDK 17 = 项目 pom 里的 maven.compiler.release。
+      # cache: maven 会把 ~/.m2 缓存起来，否则每次作业都要重下 JUnit 与 ArchUnit。
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      # 一条命令包含四层约束：
+      #   ① 注解处理器（编译期）：@Ac 引用的规格编号必须真实存在
+      #   ② ArchUnit（测试期）：依赖方向、禁用类型、不得读时钟
+      #   ③ JUnit（测试期）：751 个用例，含 712 组不变量参数矩阵
+      #   ④ 构造器不变量：Σ明细 == 总额，不满足的对象无法被创建
+      #
+      # ⚠️ 必须在 examples/billflow（聚合根）上跑。进 billing-app 单独跑时
+      #    编译器找不到 spec-guard 处理器，会静默跳过规格校验 —— 构建全绿但什么都没查。
+      - name: mvn verify（编译期规格校验 + 架构 + 测试）
+        run: cd examples/billflow && mvn -B -q verify
+
+      # 覆盖率这条不属于 Maven 构建，单独跑一次：它比对 spec.md 与映射表的条数。
+      - name: 验收标准覆盖率
+        run: bash scripts/check-spec-coverage.sh examples/billflow

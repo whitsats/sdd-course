@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  billflow 计费引擎 · 聚合 POM
+
+  两个模块的顺序不是随意的：
+    spec-guard   必须先构建，因为 billing-app 编译时要用它作为注解处理器。
+    billing-app  唯一的业务模块。
+
+  因此正确的门禁命令是聚合根上的：
+    mvn -q -B verify
+
+  而不是进到子目录单独跑 —— 单独跑 billing-app 时 spec-guard 不在仓库里，
+  编译器会静默跳过注解处理（这是本节最值得注意的失败模式：编译成功，
+  但没有执行任何规格校验）。
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>dev.billflow</groupId>
+  <artifactId>billflow</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+  <name>billflow</name>
+  <description>订阅计费引擎 —— 规格驱动开发案例 D（构建期强制）</description>
+
+  <modules>
+    <module>spec-guard</module>
+    <module>billing-app</module>
+  </modules>
+
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <junit.version>5.10.2</junit.version>
+    <archunit.version>1.2.1</archunit.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${junit.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- 版本必须显式固定：Maven 对插件的"默认版本"会随 Maven 版本变化，
+             而这会让"在我机器上是绿的"变成随机事件。 -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.2.5</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

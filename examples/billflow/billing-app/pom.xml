@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  billing-app —— 唯一的业务模块
+
+  三件事值得注意：
+
+  ① annotationProcessorPaths 指向 spec-guard。
+     编译本模块时，javac 会加载 spec-guard 里的处理器并校验 @Ac 引用的规格编号。
+
+     ⚠️ 这在**多模块构建**里才可靠：必须在聚合根上跑 `mvn verify`（reacor 里 spec-guard
+        会先构建）。单独进本目录跑 `mvn verify`，编译器找不到处理器，会**静默跳过**
+        注解处理 —— 构建全绿但一点规格校验都没做。这是本案例最值得警惕的失败模式。
+
+  ② -Aspec.file 用 ${project.basedir} 展开成绝对路径。
+     用相对路径会在不同工作目录下解析出不同结果，而"在 CI 上找不到 spec.md"这类
+     错误的表象是"规格里没有这个编号"，会把人带到完全错误的方向。
+
+  ③ spec-guard 是 provided 作用域。@Ac 的 RetentionPolicy 是 SOURCE，
+     不进入字节码，因此运行期不需要它 —— 依赖范围写准，别让测试类路径带上无关的东西。
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>dev.billflow</groupId>
+    <artifactId>billflow</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>billing-app</artifactId>
+  <name>billing-app</name>
+
+  <properties>
+    <!-- 规格文件的绝对路径：编译期校验的数据源 -->
+    <spec.file>${project.basedir}/../specs/001-billing-mvp/spec.md</spec.file>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>dev.billflow</groupId>
+      <artifactId>spec-guard</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- ArchUnit：把"架构约束"从脚本搬进测试。它以字节码为输入，
+         因此不受注释与字符串字面量影响（自制 grep 脚本正是在这里误报的）。 -->
+    <dependency>
+      <groupId>com.tngtech.archunit</groupId>
+      <artifactId>archunit-junit5</artifactId>
+      <version>${archunit.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <compilerArgs>
+            <arg>-Aspec.file=${spec.file}</arg>
+          </compilerArgs>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>dev.billflow</groupId>
+              <artifactId>spec-guard</artifactId>
+              <version>${project.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- 让失败信息里带中文时的编码稳定（Windows 默认代码页会把中文测试名显示成乱码） -->
+          <argLine>-Dfile.encoding=UTF-8</argLine>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
