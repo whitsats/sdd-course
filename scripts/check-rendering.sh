@@ -164,6 +164,78 @@ elif [ -d site-out ]; then
   awk_guard "构建产物折叠块检查"
 fi
 
+# ── ④ 站内锚点：中文标题的锚点是 `_N`，手写的锚点很可能根本不存在 ────────────────
+#
+# 这条也来自一次真实事故：`examples/stockflow/README.md` 里写了
+#
+#   [映射表](docs/验收标准-测试映射.md#元验证记录本表不是承诺是实测)
+#
+# 而 Zensical 给中文标题生成的 id **不是**中文 slug，而是位置编号：
+#
+#   ## 阶段一：地基                        → id="_1"
+#   ## 元验证记录（本表不是承诺，是实测）   → id="_3"
+#   ## 4. 招牌演示：完全不加载一行 JavaScript → id="4-javascript"   ← 保留 ASCII 部分
+#
+# 后果有两层，第二层更值得记：
+#   ① 手写的中文锚点直接 404（链接跳不过去，而页面本身没问题）。
+#   ② 即使是 `_3` 这种能用的写法，也只是「第三个同类标题」——
+#      一旦在前面插一个小节，它会**静默指向别处**。所以中文锚点不是「难写」，是**不该手写**。
+#
+# 为什么必须在这里查，而不能靠 `run-all-gates.sh` 的链接校验：
+# 那道门禁会先 `s/#.*//` 把锚点去掉 —— 它验的是「文件在不在」。
+# 于是锚点的对错**只有 `zensical build --strict` 会报**，而本脚本正好在构建之后、
+# upload 之前跑，手上就有地面真相（生成的 id）。
+# 拿生成的产物当判据，就不需要再实现一遍 Zensical 的 slugify ——
+# **两处规则必须一致**这类坑，最好的避免方式是不制造第二处。
+ANCHOR_ISSUES=""
+ANCHOR_CHECKED=0
+ANCHOR_N=0
+if [ -d site-out ]; then
+  ANCHOR_CHECKED=1
+  # 候选行的提取用 awk，而不是 `grep -o` —— 只差一件事，但它是误报的分界线：
+  # **行内代码里的提及不算链接**。本节说明文字自己就写着 `](docs/…md#…)`，
+  # 第一版用 grep 直接把它判成断链。这与①的取舍完全一致：
+  # 误报会让人关掉门禁（AP-18），所以判据必须先剥掉代码围栏与行内代码。
+  ANCHOR_CANDIDATES=$(printf '%s\n' "$SRC_FILES" README.md PLAN.md | sort -u \
+    | tr '\n' '\0' | xargs -0 awk '
+      FNR == 1 { fence = 0 }
+      /^[[:space:]]*(```|~~~)/ { fence = !fence; next }
+      fence { next }
+      {
+        line = $0
+        gsub(/`[^`]*`/, "", line)              # 去掉行内代码片段
+        while (match(line, /\]\([^)h][^)]*\.md#[^)]+\)/)) {
+          print FILENAME ":" FNR ":" substr(line, RSTART, RLENGTH)
+          line = substr(line, RSTART + RLENGTH)
+        }
+      }
+    ' 2>"$AWK_ERR")
+  awk_guard "站内锚点提取"
+
+  while IFS= read -r rec; do
+    [ -n "$rec" ] || continue
+    src=${rec%%:*}; rest=${rec#*:}; lineno=${rest%%:*}; body=${rest#*:}
+    target=${body#*](}; target=${target%%)*}       # → path.md#anchor
+    fpath=${target%%#*}; anchor=${target#*#}
+    case "$fpath" in /*) fpath=${fpath#/} ;; esac
+    [ -n "$anchor" ] || continue
+    ANCHOR_N=$((ANCHOR_N + 1))
+    # 目标 md 的站内产物路径：<dir>/<名>/index.html（README.md → <dir>/index.html）
+    dir=$(dirname "$src"); path=$(dirname "$fpath"); name=$(basename "$fpath" .md)
+    if [ "$path" = "." ]; then rel="$dir/$name"; else rel="$dir/$path/$name"; fi
+    rel=$(printf '%s' "$rel" | sed 's|^\./||')
+    [ "$name" = "README" ] && rel=$(dirname "$rel")
+    html="site-out/$rel/index.html"
+    if [ ! -f "$html" ]; then
+      ANCHOR_ISSUES="$ANCHOR_ISSUES
+$src:$lineno 锚点目标产物缺失：$html"
+    elif ! grep -qF "id=\"$anchor\"" "$html"; then
+      ANCHOR_ISSUES="$ANCHOR_ISSUES
+$src:$lineno 锚点不存在：$fpath#$anchor（中文标题得到的是 _N 位置编号，改标题顺序就会变）"
+    fi
+  done <<< "$ANCHOR_CANDIDATES"
+fi
+
 # ── 汇总 ─────────────────────────────────────────────────────────────────────
 if [ -n "$BARE" ]; then
   echo "::error::发现裸 <details>（内容不会被解析成 markdown）—— 改成 <details markdown=\"1\">"
@@ -183,6 +255,13 @@ if [ -n "$SITE_ISSUES" ]; then
   FAIL=1
 fi
 
+if [ -n "$ANCHOR_ISSUES" ]; then
+  echo "::error::站内锚点解析不到（对照的是构建产物里真实生成的 id）："
+  printf '%s\n' "$ANCHOR_ISSUES" | sed 's/^/    /'
+  echo "    修法：改成链接到文件（不写锚点），或给该处加显式 <a id=\"名字\"></a>。"
+  FAIL=1
+fi
+
 if [ "$FAIL" = 0 ]; then
   # 计数必须用**和检查同一套规则**（跳过围栏、剔掉行内代码里的提及），
   # 否则会报出一个虚高的数字 —— 数字错了，进度感就假了。
@@ -195,6 +274,7 @@ if [ "$FAIL" = 0 ]; then
   ' 2>/dev/null)
   n=${n:-?}
   echo "✅ 渲染完整性：$n 个折叠块写法正确" \
+       "· $([ "$ANCHOR_CHECKED" = 1 ] && echo "$ANCHOR_N 个站内锚点已对照产物" || echo '锚点未检查')" \
        "$([ "$SITE_CHECKED" = 1 ] && echo '· 产物已检查' || echo '· 产物未构建，已跳过')"
 fi
 

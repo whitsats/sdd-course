@@ -56,10 +56,13 @@
 ## 怎么跑
 
 ```bash
-cd examples/billflow
+# 推荐：一步到位，并且会断言「规格校验真的跑了」
+bash scripts/check-java-build.sh
 
-# 完整门禁：编译期规格校验 + 751 个测试（含架构检查）
-MAVEN_OPTS="-Dfile.encoding=UTF-8" mvn -B verify
+# 裸命令（但在 CI 里不要用它：它无法区分「校验跑了」与「校验没跑」）
+# ⚠ 用 clean：温热的 worktree 上 Maven 会输出 Nothing to compile，
+#    于是一个字节码都不重新生成，注解处理器**一次都没跑**（实测踩过，见 notes/L13 4.6）
+cd examples/billflow && MAVEN_OPTS="-Dfile.encoding=UTF-8" mvn -B clean verify
 
 # 覆盖率门禁（在仓库根跑）
 bash scripts/check-spec-coverage.sh examples/billflow
@@ -73,17 +76,23 @@ bash scripts/check-spec-coverage.sh examples/billflow
 [INFO] BUILD SUCCESS
 ```
 
-> ⚠️ **必须在聚合根目录跑**（`examples/billflow`），不要进 `billing-app` 单独跑。
-> 单独跑时编译器找不到 `spec-guard` 这个注解处理器，会**静默跳过**规格校验 ——
-> 构建全绿，但什么规格检查都没做。这是本案例最值得警惕的失败模式。
+> ⚠️ 有两种方式会让规格校验**静默不执行**，而且都不报错：
+>
+> ① **不在聚合根目录跑**（要用 `examples/billflow`），进 `billing-app` 单独跑时
+> 编译器找不到 `spec-guard` 这个注解处理器。
+> ② **增量编译**：不 `clean` 时 Maven 输出 `Nothing to compile - all classes are up to date.`，
+> 一个字节码都不重新生成，处理器自然没被执行。
+>
+> 所以 `check-java-build.sh` 用 `clean verify`，并且**断言处理器打印的标记行存在** ——
+> 不看退出码。这是本案例最值得警惕的失败模式。
 >
 > ⚠️ Windows 上 `MAVEN_OPTS="-Dfile.encoding=UTF-8"` 不是可选项，否则构建日志里的中文是乱码。
 
 ---
 
-## 四条元验证（这才是本节的价值）
+## 六条元验证（这才是本节的价值）
 
-门禁必须**自证会红**。以下四条都实测过，原始输出在 `notes/L13-构建期强制.md`：
+门禁必须**自证会红**。以下六条都实测过，原始输出在 `notes/L13-构建期强制.md`：
 
 | # | 注入的违规 | 结果 |
 |---|-----------|------|
@@ -91,6 +100,8 @@ bash scripts/check-spec-coverage.sh examples/billflow
 | B | `Money` 里加一个返回 `double` 的方法 | 架构测试失败：`Money#toYuan 返回 double` |
 | C | `DateRange` 里调用 `LocalDate.now()` 与 `System.currentTimeMillis()` | 两条规则同时失败，定位到方法 |
 | D | 从映射表删掉一行 | 覆盖率门禁指出**缺的是 1.5** |
+| E | 用 `<proc>none</proc>` 关掉注解处理 | `mvn verify` **退出码 0、测试全过**，但 `check-java-build.sh` 抓住「规格校验为零执行」 |
+| F | 什么都不注入，只在**温热的 worktree** 上跑 `mvn verify` | `Nothing to compile` → 处理器一次没跑。门禁报红，报错里同时列出「聚合根」与「增量编译」两种可能 |
 
 其中 C 还顺带说明了一件事：同一个意图「不得读时钟」需要**两条不同的规则**才能覆盖完整 ——
 `System.currentTimeMillis()` 能被"类依赖"抓到，而 `LocalDate.now()` 不能（owner 是合法的领域类型）。

@@ -1,0 +1,57 @@
+name: sql-gate
+
+# 项目 E（L14）的门禁：测试套件 + 「约束这次到底有没有生效」。
+#
+# 只盯 examples/stockflow —— 改讲义或其它案例不该触发这个作业。
+on:
+  push:
+    branches: [main]
+    paths:
+      - "examples/stockflow/**"
+      - "scripts/check-sql-enforcement.sh"
+      - "scripts/check-spec-coverage.sh"
+      - ".github/workflows/sql-gate.yml"
+  pull_request:
+    paths:
+      - "examples/stockflow/**"
+      - "scripts/check-sql-enforcement.sh"
+      - "scripts/check-spec-coverage.sh"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # node:sqlite 是**内置模块**，所以这里没有任何 `npm install`。
+      # setup-node 需要 ≥ 22.5（node:sqlite 从这个版本开始提供），用 24 保持与本地一致。
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+
+      # 44 个测试。其中 16 个**故意不 import 应用代码** ——
+      # 它们直接用裸 SQL 打这个库，证明「不经过我们的代码也拦得住」。
+      # 含两条 40 路并发争抢（worker_threads，每个 worker 一条独立连接）：
+      # 用 async/await 测不出来，因为 node:sqlite 的 API 是同步的。
+      - name: node --test（含 40 路并发争抢）
+        run: node --no-warnings --test tests/*.spec.mjs
+        working-directory: examples/stockflow
+
+      # ⚠️ 这条比测试更重要，而且它验的是另一件事：
+      #    「约束这次到底有没有生效」。
+      # 它用**命令行客户端** sqlite3 直写 8 条脏数据（零 JS 加载），
+      # 并在开头先断言**合法写入必须成功** ——
+      # 否则一个把整库写成只读的 schema 也能让「脏数据被拒绝」全绿。
+      #
+      # ubuntu-latest 自带 sqlite3 CLI；若没有，脚本会**明确报告跳过**
+      # 而不是安静地少查一段（那段是本案例最有说服力的证据）。
+      - name: 数据层强制力（八条裸客户端直写）
+        run: bash scripts/check-sql-enforcement.sh
+
+      # 规格条数必须等于映射表行数。少一行 = 有标准没人守。
+      - name: 验收标准覆盖率
+        run: bash scripts/check-spec-coverage.sh examples/stockflow

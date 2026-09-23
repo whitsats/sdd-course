@@ -25,6 +25,11 @@ venv/
 # ── Node（examples/rulesmith 用 node --test 跑，不装依赖）──────
 node_modules/
 
+# ── SQLite 本地库文件（examples/stockflow）──────────────────────
+# var/ 是跑演示时生成的库文件（含 -wal / -shm）。
+# 与 target/ 同类：仓里只保留 schema，库由命令生成。
+examples/stockflow/var/
+
 # ── Java / Maven（examples/billflow 用 mvn verify 跑门禁）─────
 # target/ 是构建产物：class 文件、测试报告、jar。
 # 它和 site-src/ 是同一类东西 —— 仓库里只保留源，产物由构建生成。

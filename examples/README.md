@@ -1,4 +1,4 @@
-# 完整产物示例 · 四个项目
+# 完整产物示例 · 五个项目
 
 > 这一层不是示例代码，是**对照答案**。`../projects/README.md` 是你动手建的地方，`examples/` 是
 > 同一件事做到位的成品 —— 讲义里每一处「📁 本节的完整参考产出」都指向这里。
@@ -9,8 +9,12 @@
 >
 > 第四个（`billflow`）换了一根轴：不再问「规格有多强」，而是问**「约束能放在多早」** ——
 > 从运行期红灯前移到编译器、架构检查与构造器。
+>
+> 第五个（`stockflow`）把同一根轴推向**相反**的方向：约束能放在**多晚** ——
+> 晚到应用程序已经不在了也拦得住。它换的是「约束住在哪一层」，而
+> 恰恰因此暴露了一条前四个案例都看不见的代价：**强制力取决于「谁来连接」**。
 
-## 四个项目
+## 五个项目
 
 | 项目 | 栈 | 严谨度等级 | 教学埋点 |
 |------|-----|-----------|---------|
@@ -18,10 +22,11 @@
 | [taskflow](taskflow/README.md) | TypeScript API | **spec-anchored** | **三种「牙齿」** —— 类型约束 / 契约测试 / CI 门禁 |
 | [rulesmith](rulesmith/README.md) | Node + 生成器 | **spec-as-source** | 人只改规格，产物自动跟着变 |
 | [billflow](billflow/README.md) | **Java 17 + Maven** | **spec-anchored · 构建期强化** | **约束前移** —— 编译期 / 字节码 / 构造器层层设防 |
+| [stockflow](stockflow/README.md) | **SQLite + Node（零依赖）** | **spec-anchored · 数据层强化** | **约束下沉** —— 26 条里 20 条的强制力在 schema 上，拦住**不经过代码**的写入 |
 
 ## 先看这张表：哪些能直接跑
 
-**别猜。** 三个项目的产物都完整可读，但可执行程度不同：
+**别猜。** 五个项目的产物都完整可读，但可执行程度不同：
 
 | 项目 | 产物可读 | 代码可运行 | 门禁可跑 |
 |------|---------|-----------|---------|
@@ -29,13 +34,14 @@
 | taskflow | ✅ 10 份 | ⚠️ **未提交实现**；契约测试是**范式**，不是可执行套件 | ✅ 覆盖率 · 分层 |
 | rulesmith | ✅ 7 份 | ✅ **生成器可跑，67 个测试全过** | ✅ 覆盖率 · 生成物可复现 |
 | billflow | ✅ 9 份 | ✅ **Maven 工程可构建，751 个测试全过** | ✅ 覆盖率 · **编译期规格校验** · ArchUnit 架构检查 · CI |
+| stockflow | ✅ 10 份 | ✅ **零依赖，44 个测试全过（含 40 路并发争抢）** | ✅ 覆盖率 · **数据层强制力（八条裸客户端直写）** · CI |
 
 > ⚠️ **两条必须说清的边界，否则你会误以为自己跑过了什么。**
 
 **① `taskflow` 的契约测试不可执行。** 它们指向一个尚未提交的 API 实现，仓库里没有该项目的
 `package.json`。它们示范的是「把验收标准写成契约测试」的**形状与颗粒度**
 （权限矩阵表格驱动 / 状态机参数化 / 并发写入），不是一套能绿能红的套件。
-真正端到端可跑的是 `rulesmith`。
+真正端到端可跑的是 `rulesmith`、`billflow` 与 `stockflow`。
 
 **② `taskflow` 的映射表引用了 9 个测试文件，仓库里只提交了 3 个。**
 这不是疏忽，而是把门禁的边界摆在明面上：`scripts/check-spec-coverage.sh` 校验的是
@@ -48,17 +54,20 @@
 ## 一次验证全部
 
 ```bash
-# 全部门禁（17 项：覆盖率 / 分层 / 生成物 / 测试 / 密钥 / 渲染 / 链接）
+# 全部门禁（覆盖率 / 分层 / 生成物 / 测试 / 密钥 / 渲染 / 链接）
 bash scripts/run-all-gates.sh
 
 # 单个项目
 bash scripts/check-spec-coverage.sh examples/taskflow
 
 # 项目 D 完整门禁（编译期 + 架构 + 测试）
-cd examples/billflow && MAVEN_OPTS="-Dfile.encoding=UTF-8" mvn -B verify
+bash scripts/check-java-build.sh
+
+# 项目 E 完整门禁（数据层强制力：八条裸客户端直写）
+bash scripts/check-sql-enforcement.sh
 ```
 
-> 💡 缺 JDK/Maven 时 `run-all-gates.sh` 会把 Java 那一项计入 **「跳过」并单独列出**，
+> 💡 缺 JDK/Maven/Node 时 `run-all-gates.sh` 会把对应项计入 **「跳过」并单独列出**，
 > 而不是让它从「通过」里静静消失 —— 跳过不等于通过，这一点在输出里必须看得见。
 
 四个项目当前的实测值：
@@ -69,6 +78,7 @@ cd examples/billflow && MAVEN_OPTS="-Dfile.encoding=UTF-8" mvn -B verify
 | taskflow | 40 | 40 | ✅ |
 | rulesmith | 10 | 10 | ✅ |
 | billflow | 21 | 21 | ✅ |
+| stockflow | 26 | 26 | ✅ |
 
 ## 建议的阅读顺序
 
@@ -82,3 +92,8 @@ cd examples/billflow && MAVEN_OPTS="-Dfile.encoding=UTF-8" mvn -B verify
 4. 学到 L13（可选）→ 读 [billflow](billflow/README.md)。先读
    `docs/adr/ADR-003-金额精度与取整.md`（为什么这么算），再看 `spec-guard/`（怎么让编译器替你守着）。
    四条元验证的原始输出在 `notes/L13-构建期强制.md`。
+5. 学到 L14（可选）→ 读 [stockflow](stockflow/README.md)。**按这个顺序读**：
+   先 `docs/adr/ADR-001`（判据），再 `migrations/001_init.sql`（判据的落地），
+   然后 `docs/adr/ADR-002`（这条路的代价 —— 本案例最核心的一篇）。
+   想直接看结论就跳到 `notes/L14-数据层强制.md` §3 的八条直写输出：**7 拦 1 漏**，
+   而漏掉的那一条恰好是强制力挂在连接前提上的那一条。

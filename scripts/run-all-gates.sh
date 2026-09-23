@@ -80,7 +80,7 @@ done
 # 不等 = 有标准没有测试 = 必须阻断。
 # ══════════════════════════════════════════════════════════════════════════
 head "② 验收标准覆盖率（spec ↔ 测试映射）"
-for P in examples/focuslog examples/taskflow examples/rulesmith; do
+for P in examples/focuslog examples/taskflow examples/rulesmith examples/stockflow; do
   [ -d "$P" ] || continue
   gate "覆盖率：$P" bash scripts/check-spec-coverage.sh "$P"
 done
@@ -123,8 +123,29 @@ fi
 # 项目 D（L13）：Java 侧的四层约束全部在 mvn verify 里 ——
 # 编译期规格校验（注解处理器）+ ArchUnit 架构检查 + 751 个测试 + 构造器不变量。
 # 它依赖 JDK 17 与 Maven，所以用 gate_soft：缺工具链时明确跳过，而不是假装通过。
+# 走 check-java-build.sh 而不是直接 mvn：它会断言注解处理器真的执行过。
+# 「处理器没跑」与「跑了没发现问题」在输出上完全一样（见脚本头部注释）。
 gate_soft "测试：billflow（Java 编译期规格校验 + 架构 + 751 测试）" mvn \
-  bash -c 'cd examples/billflow && MAVEN_OPTS="-Dfile.encoding=UTF-8" mvn -q -B verify'
+  bash scripts/check-java-build.sh
+
+# 项目 E（L14）：stockflow 的门禁分两条，因为它们验的不是同一件事。
+#
+# ① 测试套件（44 个）—— 验的是「行为符合规格」。
+#    其中 16 个**不 import 应用代码**：它们直接用裸 SQL 打这个库，
+#    证明的是「不经过我们的代码也拦得住」。
+# ② 数据层强制力门禁 —— 验的是「约束这次到底有没有生效」。
+#    它用命令行客户端直写 8 条脏数据（完全不加载 JS），
+#    并且**先断言合法写入能成功** —— 否则一个只读的库也能让它全绿。
+#
+# 两条都要。只有 ① 不知道绕过路径上会发生什么；
+# 只有 ② 不知道调用方拿到的是什么。
+gate_soft "测试：stockflow（数据层 + 应用层，含 40 路并发争抢）" node \
+  bash -c 'cd examples/stockflow && node --no-warnings --test tests/*.spec.mjs'
+# 注意 node 的版本门：node:sqlite 需要 ≥ 22.5。
+# 版本不够时「跑不了」与「跑了没问题」在输出上差别巨大，不能混为一谈 ——
+# 所以 gate_soft 只在缺 node 时跳过；版本不够时本脚本会以 2 退出并说明原因。
+gate_soft "数据层强制力：stockflow（八条直写 + 反假绿 + 守恒 + 巡检）" node \
+  bash scripts/check-sql-enforcement.sh
 
 # ══════════════════════════════════════════════════════════════════════════
 head "⑥ 密钥泄漏自查"
@@ -149,19 +170,44 @@ gate "折叠块写法" bash scripts/check-rendering.sh
 
 # ══════════════════════════════════════════════════════════════════════════
 head "⑧ 文档内部链接"
+# ⚠ 判据两件事，都和①一致：
+#   ① 先剥掉**代码围栏与行内代码** —— 文档里「提到」一个链接不是「写了」一个链接。
+#      初版直接用 grep 拓，于是本节自己的说明文字（行内代码里 写着那个坏链接）
+#      被当成了断链。**误报会让人关掉门禁（AP-18）**，所以先把判据修准。
+#   ② 只扫源文件，不扫 `site-src/`（那是构建产物，同一处断链会被报两次）。
+#
+# ⚠ 本门禁验的是「文件在不在」，它会把 `#锚点` 先去掉 ——
+#   所以它**不能**证明锚点是对的。实测就有一个手写的中文锚点直接跳不过去，
+#   而这道门禁报「全部内部链接可解析」。
+#   锚点的校验放在 check-rendering.sh ④：它对照 zensical 真实生成的 id
+#   （中文标题的 id 是 `_N` 位置编号，不是中文 slug），且必须在构建之后跑。
 gate "链接校验" bash -c '
+  LINKS=$(find . -name "*.md" -not -path "./.git/*" -not -path "./.freebuff/*" \
+            -not -path "./site-src/*" -not -path "./site-out/*" -print0 \
+    | xargs -0 awk '"'"'
+        FNR == 1 { fence = 0 }
+        /^[[:space:]]*(```|~~~)/ { fence = !fence; next }
+        fence { next }
+        {
+          line = $0
+          gsub(/`[^`]*`/, "", line)        # 去掉行内代码片段
+          while (match(line, /\]\([^)]*\.md[^)]*\)/)) {
+            print FILENAME ":" FNR ":" substr(line, RSTART + 2, RLENGTH - 3)
+            line = substr(line, RSTART + RLENGTH)
+          }
+        }'"'"')
   fail=0
-  for f in $(find . -name "*.md" -not -path "./.git/*" -not -path "./.freebuff/*"); do
-    d=$(dirname "$f")
-    for link in $(grep -o "](\([^)]*\.md\)[^)]*)" "$f" 2>/dev/null \
-                  | sed "s/](//; s/)$//; s/#.*//" | grep "\.md$" | grep -v "^http"); do
-      case "$link" in
-        /*) target=".$link" ;;
-        *)  target="$d/$link" ;;
-      esac
-      [ -e "$target" ] || { echo "  断链: $f -> $link"; fail=1; }
-    done
-  done
+  while IFS= read -r rec; do
+    [ -n "$rec" ] || continue
+    f=${rec%%:*}; rest=${rec#*:}; body=${rest#*:}
+    case "$body" in http*) continue ;; esac
+    link=${body%%#*}
+    case "$link" in
+      /*) target=".$link" ;;
+      *)  target="$(dirname "$f")/$link" ;;
+    esac
+    [ -e "$target" ] || { echo "  断链: $f -> $body"; fail=1; }
+  done <<< "$LINKS"
   [ "$fail" = 0 ] && echo "  全部内部链接可解析"
   exit $fail
 '

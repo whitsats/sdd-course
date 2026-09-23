@@ -18,7 +18,7 @@
 
 [project]
 site_name = "SDD 实战精修课"
-site_description = "从 vibe coding 到规格驱动 —— 13 节讲义 + 3 个递进案例 + 全部真实产物"
+site_description = "从 vibe coding 到规格驱动 —— 15 节讲义 + 5 个递进案例 + 全部真实产物"
 site_url = "https://whitsats.github.io/sdd-course/"
 repo_url = "https://github.com/whitsats/sdd-course"
 repo_name = "whitsats/sdd-course"
@@ -58,11 +58,14 @@ nav = [
   { "六 · 可选进阶（Java · 约束前移）" = [
       { "13 把约束前移到构建期 ★" = "lessons/13-java-build-time.md" },
   ] },
+  { "七 · 可选进阶（SQL · 约束下沉）" = [
+      { "14 把约束下沉到数据层 ★" = "lessons/14-data-layer-constraints.md" },
+  ] },
   { "参考" = [
       { "EARS 句式速查" = "reference/ears.md" },
       { "术语表 · 中英对照" = "reference/glossary.md" },
       { "反模式清单" = "reference/anti-patterns.md" },
-      { "门禁脚本 × 6 + 规格审阅器" = "scripts/index.md" },
+      { "门禁脚本 × 8 + 规格审阅器" = "scripts/index.md" },
       { "Agnes API 速查（实测）" = "reference/agnes-api.md" },
       { "案例项目设计说明" = "projects/index.md" },
       { "模板库（11 份，可直接拷用）" = [
@@ -80,8 +83,8 @@ nav = [
           "templates/PR-template.md",
       ] },
   ] },
-  { "完整产物示例（三个项目）" = [
-      { "总览：三个项目与它们的严谨度等级" = "examples/index.md" },
+  { "完整产物示例（五个项目）" = [
+      { "总览：五个项目与它们的约束轴" = "examples/index.md" },
       { "A · focuslog（Python CLI · spec-first）" = [
           "examples/focuslog/index.md",
           "examples/focuslog/memory/constitution.md",
@@ -112,6 +115,17 @@ nav = [
           "examples/billflow/docs/adr/ADR-003-金额精度与取整.md",
           "examples/billflow/docs/验收标准-测试映射.md",
           "examples/billflow/notes/L13-构建期强制.md",
+      ] },
+      { "E · stockflow（SQLite · 约束下沉到 schema）" = [
+          "examples/stockflow/index.md",
+          "examples/stockflow/specs/001-stockflow-mvp/spec.md",
+          "examples/stockflow/specs/001-stockflow-mvp/plan.md",
+          "examples/stockflow/docs/adr/ADR-001-约束该住在哪一层.md",
+          "examples/stockflow/docs/adr/ADR-002-外键可能不生效.md",
+          "examples/stockflow/docs/adr/ADR-003-时钟做成一张表.md",
+          "examples/stockflow/docs/adr/ADR-004-数据层做不到的事.md",
+          "examples/stockflow/docs/验收标准-测试映射.md",
+          "examples/stockflow/notes/L14-数据层强制.md",
       ] },
       { "C · rulesmith（规格即源 · 生成器驱动）" = [
           "examples/rulesmith/index.md",

@@ -1,0 +1,16 @@
+{
+  "name": "stockflow",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "库存预占引擎 —— SDD 案例 E：把约束放进数据层",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "test": "node --test tests/",
+    "cli": "node src/cli.mjs"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

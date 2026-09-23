@@ -8,11 +8,13 @@ on:
     branches: [main]
     paths:
       - "examples/billflow/**"
+      - "scripts/check-java-build.sh"
       - "scripts/check-spec-coverage.sh"
       - ".github/workflows/java-gate.yml"
   pull_request:
     paths:
       - "examples/billflow/**"
+      - "scripts/check-java-build.sh"
       - "scripts/check-spec-coverage.sh"
   workflow_dispatch:
 
@@ -39,10 +41,15 @@ jobs:
       #   ③ JUnit（测试期）：751 个用例，含 712 组不变量参数矩阵
       #   ④ 构造器不变量：Σ明细 == 总额，不满足的对象无法被创建
       #
+      # ⚠️ 走 scripts/check-java-build.sh 而不是直接 mvn：
+      #    那一步会断言注解处理器真的执行过（CI 日志里出现标记行），
+      #    因为「处理器没跑」与「跑了没发现问题」在输出上完全一样。
+      #    直接写 `mvn -q verify` 时构建可能全绿而规格校验为零执行。
+      #
       # ⚠️ 必须在 examples/billflow（聚合根）上跑。进 billing-app 单独跑时
-      #    编译器找不到 spec-guard 处理器，会静默跳过规格校验 —— 构建全绿但什么都没查。
+      #    编译器找不到 spec-guard 处理器，会静默跳过规格校验。
       - name: mvn verify（编译期规格校验 + 架构 + 测试）
-        run: cd examples/billflow && mvn -B -q verify
+        run: bash scripts/check-java-build.sh
 
       # 覆盖率这条不属于 Maven 构建，单独跑一次：它比对 spec.md 与映射表的条数。
       - name: 验收标准覆盖率
