@@ -18,7 +18,7 @@
 
 [project]
 site_name = "SDD 实战精修课"
-site_description = "从 vibe coding 到规格驱动 —— 15 节讲义 + 5 个递进案例 + 全部真实产物"
+site_description = "从 vibe coding 到规格驱动 —— 16 节讲义 + 5 个递进案例 + 全部真实产物"
 site_url = "https://whitsats.github.io/sdd-course/"
 repo_url = "https://github.com/whitsats/sdd-course"
 repo_name = "whitsats/sdd-course"
@@ -60,6 +60,9 @@ nav = [
   ] },
   { "七 · 可选进阶（SQL · 约束下沉）" = [
       { "14 把约束下沉到数据层 ★" = "lessons/14-data-layer-constraints.md" },
+  ] },
+  { "八 · 可选进阶（Eval · 把规格变成考卷）" = [
+      { "15 把验收标准变成评测集 ★" = "lessons/15-spec-evals.md" },
   ] },
   { "参考" = [
       { "EARS 句式速查" = "reference/ears.md" },
