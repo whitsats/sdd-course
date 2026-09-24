@@ -7,7 +7,7 @@
 没有脚本，SDD 就退化成「先写文档」——而文档的约束力是建议性的，会悄悄腐烂。有了脚本，`spec.md` 和代码之间那根绳子才真正绷紧。
 
 ```bash
-# 一条命令验完全部（22 项）
+# 一条命令验完全部（24 项门禁；工具链齐时有 1 项固定跳过：focuslog 尚无实现，分层检查无对象）
 bash scripts/run-all-gates.sh
 
 # 只输出结论
@@ -66,7 +66,7 @@ bash scripts/check-layer-boundary.sh examples/taskflow ts
 bash scripts/check-layer-boundary.sh examples/focuslog py
 ```
 
-退出码：`0` 边界完好 · `1` 有越界 · `2` 定位不到源码目录。
+退出码：`0` 边界完好 · `1` 有越界 · `2` 定位不到源码目录 · `3` 项目尚未实现，无对象可查（跳过 —— `run-all-gates.sh` 会把它计入跳过项，绝不混进「通过」）。
 
 ⚠️ **本脚本最容易被写错的地方**：不能直接在源码里 grep 模块名。`state-machine.ts` 的注释里写着「本文件不得 import fastify」——naive 的 grep 会把这句话判成违规，于是门禁**每次都红**。
 

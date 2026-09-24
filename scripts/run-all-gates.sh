@@ -29,12 +29,29 @@ say()  { [ "$QUIET" = 1 ] || printf '%s\n' "$*"; }
 head() { [ "$QUIET" = 1 ] || printf '\n\033[1m%s\033[0m\n' "$*"; }
 
 # gate <名称> <命令...>
+#
+# 退出码约定：
+#   0 = 通过；1（或其它） = 检查失败；3 = 这项检查**没有对象**（跳过）。
+# 「3」由被调用的门禁自己声明（目前是 check-layer-boundary.sh 的「尚未实现」分支），
+# 本函数只负责把它从「通过」里分出来。理由与 gate_soft 相同：
+#   门禁最危险的失效不是报错，是沉默。跳过若被计成 ✔，
+#   「没跑」与「跑过了」在总结行里就长得一模一样。
 gate() {
   local name="$1"; shift
-  local out
-  if out="$("$@" 2>&1)"; then
+  local out rc
+  out="$("$@" 2>&1)"; rc=$?
+  if [ "$rc" -eq 0 ]; then
     PASS=$((PASS + 1))
     printf '  \033[32m✔\033[0m %s\n' "$name"
+  elif [ "$rc" -eq 3 ]; then
+    SKIP=$((SKIP + 1))
+    # ⚠️ 取首行不能用 `head -n 1`：本脚本把 head 定义成了章节标题函数（见上），
+    #    同名调用会吞掉管道输入。用 sed 取第一行。
+    local reason
+    reason=$(printf '%s\n' "$out" | sed -n 's/^·[[:space:]]*跳过[:：][[:space:]]*//p' | sed -n '1p')
+    reason="${reason:-该项检查报告没有可检查的对象}"
+    SKIPPED_NAMES+=("$name（$reason）")
+    printf '  \033[33m○\033[0m %s —— 跳过：%s\n' "$name" "$reason"
   else
     FAIL=$((FAIL + 1))
     FAILED_NAMES+=("$name")
@@ -80,7 +97,9 @@ done
 # 不等 = 有标准没有测试 = 必须阻断。
 # ══════════════════════════════════════════════════════════════════════════
 head "② 验收标准覆盖率（spec ↔ 测试映射）"
-for P in examples/focuslog examples/taskflow examples/rulesmith examples/stockflow; do
+# billflow 也在列：虽然 java-gate.yml 在 CI 里会跑它，但这个检查是纯文本比对，
+# 不需要 JDK —— 本地总验收没有理由少验一个项目。
+for P in examples/focuslog examples/taskflow examples/rulesmith examples/billflow examples/stockflow; do
   [ -d "$P" ] || continue
   gate "覆盖率：$P" bash scripts/check-spec-coverage.sh "$P"
 done
@@ -114,6 +133,14 @@ head "⑤ 测试套件"
 if command -v node >/dev/null 2>&1; then
   gate "测试：rulesmith（生成器 + 产物，含幂等性与构建期校验）" \
     bash -c 'cd examples/rulesmith && node --test tests/*.spec.ts'
+
+  # taskflow 的契约测试是可执行的：node:test + 领域层内存实现（tests/fixtures/harness.ts），
+  # 零第三方依赖。每一条规则判定都走 src/domain/，harness 自己不实现规则。
+  # ⚠️ 只点名这三个文件 —— 同目录的 drift-drill.spec.ts 是**故意失败**的漂移演练
+  #    （L07 验收 ②：证明测试真的会红）。把它放进门禁 = 一条永远红的门禁
+  #    = 必然被团队关掉，然后连真正的违规一起失去（AP-18）。
+  gate "测试：taskflow（契约测试：14 格权限矩阵 + 状态机穷举 + 20 路并发冲突）" \
+    bash -c 'cd examples/taskflow && node --no-warnings --test tests/contract/auth-matrix.spec.ts tests/contract/task-state.spec.ts tests/contract/task-concurrency.spec.ts'
 else
   SKIP=$((SKIP + 1))
   SKIPPED_NAMES+=("测试：rulesmith（未找到 node）")
@@ -159,7 +186,7 @@ if grep -rn "sk-[A-Za-z0-9]\{20,\}" \
   sed 's/^/      /' /tmp/_leak.txt
 else
   PASS=$((PASS + 1))
-  printf '  \033[32m✔\033[0m 无 sk- 形式的密钥'
+  printf '  \033[32m✔\033[0m 无 sk- 形式的密钥\n'
 fi
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -217,7 +244,7 @@ printf '\n\033[1m总结\033[0m\n'
 printf '  通过 %d   失败 %d   跳过 %d\n' "$PASS" "$FAIL" "$SKIP"
 
 if [ "$SKIP" -gt 0 ]; then
-  printf '  跳过项（**不等于通过**，只是本机没装对应工具链）：\n'
+  printf '  跳过项（**不等于通过**，原因见上）：\n'
   for n in "${SKIPPED_NAMES[@]}"; do printf '    - %s\n' "$n"; done
 fi
 
@@ -230,7 +257,7 @@ if [ "$FAIL" -gt 0 ]; then
 fi
 
 if [ "$SKIP" -gt 0 ]; then
-  printf '  \033[32m✅ 已跑的门禁全部通过\033[0m（有 %d 项跳过，装齐工具链后重跑）\n' "$SKIP"
+  printf '  \033[32m✅ 已跑的门禁全部通过\033[0m（有 %d 项跳过 —— 每一项的原因见上）\n' "$SKIP"
 else
   printf '  \033[32m✅ 全部门禁通过\033[0m\n'
 fi

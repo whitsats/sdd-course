@@ -29,7 +29,7 @@
 | 牙齿 | 实现 | 拦住什么 |
 |------|------|---------|
 | **类型约束** | [src/domain/state-machine.ts](src/domain/state-machine.ts) · [permissions.ts](src/domain/permissions.ts) · [pagination.ts](src/domain/pagination.ts) | 非法状态流转、越权组合、分页参数越界 —— **编译期** |
-| **契约测试** | [tests/contract/](tests/contract/) | 行为偏离规格 —— **测试期** |
+| **契约测试** | [tests/contract/](tests/contract/)（可执行，零依赖） | 行为偏离规格 —— **测试期** |
 | **CI 门禁** | [.github/workflows/sdd-gate.yml](.github/workflows/sdd-gate.yml) | 规格与映射表脱节、分层越界 —— **合并前** |
 
 ## 产物清单
@@ -41,7 +41,7 @@
 | L04 | [specs/002-task-tags/spec.md](specs/002-task-tags/spec.md) | 第二个 feature —— 它在 L06 里被明确列为**非目标**，示范「非目标不是永远不做」 |
 | L06 | [docs/adr/ADR-002-并发冲突策略.md](docs/adr/ADR-002-并发冲突策略.md) | 为什么是乐观锁而不是悲观锁，以及**什么条件下该推翻它** |
 | L07 | [docs/验收标准-测试映射.md](docs/验收标准-测试映射.md) | **40 / 40 对齐**：权限 7 · 边界 10 · 参数 6 · 契约 4 · 状态机 3 · 并发 2 · 幂等 1 · 行为 7 |
-| L07 | [tests/contract/](tests/contract/) | 三份契约测试范式：14 格权限矩阵（表格驱动）· 状态机参数化 · 20 次并发写入 |
+| L07 | [tests/contract/](tests/contract/) | 三份契约测试套件（**可执行，49 个测试**）：14 格权限矩阵（表格驱动）· 状态机穷举 · 20 次并发写入；另有 1 条**故意失败**的[漂移演练](tests/contract/drift-drill.spec.ts) |
 | L08 | [notes/L08-feature切换.md](notes/L08-feature切换.md) | 多 feature 切换的**真实操作记录**，含状态文件内容与一个防坑 shell 函数 |
 | L09 | [notes/L09-不收敛分流.md](notes/L09-不收敛分流.md) | 循环报 gap 时怎么判断「是缺口还是工具盲区」—— **含两轮误判后找到根因的全过程** |
 | L09 | [notes/L09-规格变更.md](notes/L09-规格变更.md) | 改**已上线**行为的六步链路，含「先让测试变红」的真实输出 |
@@ -60,24 +60,39 @@
 
 ## 两条必须说清的边界
 
-**① 契约测试是范式，不是可执行套件。**
-它们指向一个**尚未提交的 API 实现**，仓库里没有该项目的 `package.json`，
-所以 `pnpm vitest run` 在这里跑不起来。它们示范的是「把验收标准写成契约测试」的
-**形状与颗粒度**，不是一套能绿能红的套件。真正端到端可跑的是
-[rulesmith](../rulesmith/README.md)。
+**① 契约测试可执行，但完整 API 实现仍未提交。**
+三份套件跑在 [tests/fixtures/harness.ts](tests/fixtures/harness.ts) —— 一个**没有 HTTP 服务器、
+没有数据库**的最小内存实现上：请求分发、成员资格、乐观并发、审计都在内存里完成，
+但每一条规则判定都走 `src/domain/` 的领域函数，harness 自己不实现任何规则。
+`node --test` 即可复现（零第三方依赖，Node ≥ 23）。**它没有兑现的部分同样明确**：
+routes / repositories / Postgres 不存在，「穿透 HTTP 与数据库」的端到端仍然没有对象。
 
-**② 映射表引用了 9 个测试文件，仓库里只提交了 3 个。**
+**② 映射表引用了 9 个测试文件，仓库里只提交了 4 个，其中 3 个可执行。**
 
 这不是疏忽，而是把门禁的边界摆在明面上：`scripts/check-spec-coverage.sh` 校验的是
 **spec ↔ 映射表 的一致性**（条数与编号两两对应），**不校验测试文件是否真的存在**。
+第 4 个（[drift-drill](tests/contract/drift-drill.spec.ts)）是**故意写错**的元验证 ——
+它必须永远红，所以永不进门禁（一条永远红的门禁必然被关掉，见 AP-18）。
 
 > 📌 **门禁的覆盖范围，就是它的盲区范围。**
 > 一个全绿的门禁不等于「一切都对」，只等于「它检查的那些事是对的」。
 > 这不是本门禁的缺陷 —— **任何门禁都有盲区**，缺陷是以为自己没有。
 
+> 📌 **一个只有可执行之后才能讲的故事**：auth-matrix 里那条「覆盖了全部 14 格」的元验证，
+> 最初把去重键写成 `角色:路径` —— 不含 method，POST 与 GET 两格被折叠，实际只覆盖 10 格。
+> **这条 bug 在测试跑不起来的年代从没被执行过；一可执行，它抓住的第一个对象是它自己。**
+> 修复方式：键改为 `角色:方法 路径`。这正是「范式」与「套件」的差别 ——
+> 范式只能示范形状，套件才能暴露错误。
+
 ## 怎么验证
 
 ```bash
+# 契约测试：49 个，零依赖（node:test + 原生类型擦除，Node ≥ 23）
+cd examples/taskflow && node --no-warnings --test tests/contract/auth-matrix.spec.ts tests/contract/task-state.spec.ts tests/contract/task-concurrency.spec.ts
+
+# 漂移演练：**预期 1 fail** —— 它证明这套测试真的会红（见 L07 验收 ②）
+node --test tests/contract/drift-drill.spec.ts
+
 # 覆盖率：40 条标准 vs 40 行映射
 bash scripts/check-spec-coverage.sh examples/taskflow
 

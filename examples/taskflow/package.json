@@ -1,0 +1,17 @@
+{
+  "name": "taskflow",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "团队任务协作 API（最小版）—— L06–L09 spec-anchored 演示项目。领域层 + 契约测试，零第三方依赖。",
+  "engines": {
+    "node": ">=23"
+  },
+  "scripts": {
+    "test": "node --test tests/contract/auth-matrix.spec.ts tests/contract/task-state.spec.ts tests/contract/task-concurrency.spec.ts",
+    "drill": "node --test tests/contract/drift-drill.spec.ts",
+    "gate": "bash ../../scripts/check-layer-boundary.sh . ts"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

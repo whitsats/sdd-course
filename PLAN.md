@@ -262,7 +262,7 @@ Spec-as-Source      人只改规格，代码 100% 生成，永不手改   ← �
 | **目标** | ① 建立**工具选型判断力**（从 L11 移来）② 从「我会用」到「团队能用」，并完成课程收束 |
 | **工具横评** | Spec Kit（开源、模型无关、参考实现）/ Kiro（agentic IDE、hooks 守则、AWS 亲和）/ Claude Code `cc-sdd`（终端优先）/ Cursor Plan Mode（IDE 内 diff 审阅）/ OpenSpec（Markdown + YAML 极简）/ BMAD（多角色方法论）/ Tessl（合规与审计轨迹） |
 | **内容** | ① 多 agent 协作与交接（规格作为交接契约，而非口头同步）② Spec Kit 的 presets / extensions / workflows / bundles 如何定制你自己的流程 ③ 评审流程：谁审 spec、谁审 plan、评审看什么 ④ 度量：漂移率、返工率、规格覆盖率 ⑤ 团队落地检查清单 ⑥ 失败模式复盘与**退出策略**：什么情况下应该放弃 SDD |
-| **交付物** | 工具选型对比表 + 团队落地检查清单 + 你为自己项目定制的 SDD 流程 |
+| **交付物** | 工具选型对比表 + 团队落地检查清单 + 你为自己项目定制的 SDD 流程（前两份有现成模板：`templates/tool-selection-template.md`、`templates/team-rollout-checklist-template.md`） |
 | **验收** | ① 对比表能给出「什么团队该选什么」的具体建议 ② 能回答：如果明天要在一个 5 人团队推行这套流程，第一周做什么、第一个月看什么指标、什么信号意味着该收手 |
 | **术语** | preset、extension、workflow、bundle、spec coverage、drift rate |
 
@@ -283,7 +283,7 @@ Spec-as-Source      人只改规格，代码 100% 生成，永不手改   ← �
 | **目标** | 掌握「约束的时机」这层判断力：同一个约束放在测试、CI、编译期、构造期，各自的代价与收益 |
 | **动手** | ① 读 `spec.md` 与 `ADR-003`（三个取整决策的取舍）② 读 `spec-guard/`（~200 行的注解处理器）③ `mvn verify` 跑通 ④ **依次注入四条违规，确认它们真的会红** |
 | **三种机制** | 编译期（编号不存在 → 编译失败）· 字节码（架构规则 → 定位到方法）· 构造期（不变量 → 非法对象无法创建） |
-| **交付物** | 可构建的 Maven 工程 + 四条元验证记录 |
+| **交付物** | 可构建的 Maven 工程 + 六条元验证记录（A–F，含「构建全绿但校验零执行」与「增量编译空跑」两条） |
 | **验收** | ① `mvn verify` 全绿（751 个测试）② `@Ac("9.9")` → 编译失败 ③ domain 依赖 `double`/时钟 → 架构测试失败 ④ 覆盖率 21/21 ⑤ **你写下这套约束不适合自己手头哪个项目、以及原因** |
 | **踩坑** | ① 必须在**聚合根**上跑 `mvn verify`（进子模块跑会静默跳过注解处理，构建全绿但什么都没查）② Windows 上 `MAVEN_OPTS="-Dfile.encoding=UTF-8"` 不是可选项 ③ 注解处理器没有 `close()` 钩子，收尾逻辑靠 `processingOver` ④ `LocalDate.now()` 漏过「类依赖」规则，必须写「方法调用」规则 ⑤ Java 17 上 sealed + 穷尽 switch 还是预览特性，所以本案选了注解处理器路线 |
 | **术语** | annotation processor、ArchUnit、构建期强制、构造器不变量 |

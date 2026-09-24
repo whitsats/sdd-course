@@ -7,6 +7,8 @@
 #   bash scripts/check-layer-boundary.sh examples/focuslog py
 #
 # 退出码：0 = 边界完好；1 = 有越界；2 = 定位不到源码目录
+#         3 = 项目尚未实现，没有可检查的对象（跳过，不是通过）
+#            —— run-all-gates.sh 的 gate() 依据这个约定把跳过从「通过」里分出来。
 #
 # ⚠️ 实现要点（这一条是本脚本最容易被写错的地方）：
 #   不能直接在源码里 grep 模块名 —— 那样会把**注释和文档字符串里的提及**也算成违规。
@@ -52,7 +54,9 @@ require_layers() {
   if [ ! -d "$ROOT/src" ]; then
     echo "· 跳过：$ROOT 下没有 src/ 目录（该项目目前只有规格，尚未实现）"
     echo "  分层边界检查的对象是实现，不是规格 —— 实现出现后本检查自动生效。"
-    exit 0
+    # 必须退出 3 而不是 0：0 在 run-all-gates 的总结里就是「通过」，
+    # 而「跳过」和「通过」是两件事（见 examples/focuslog/README.md 的原文）。
+    exit 3
   fi
   if [ ! -d "$domain" ]; then
     echo "::error::找不到 $domain（但 $ROOT/src 存在 → 目录结构不符合约定的分层）"
@@ -101,7 +105,7 @@ case "$LANG" in
     if [ ! -d "$PY_SRC" ]; then
       echo "· 跳过：$ROOT 下没有 src/ 目录（该项目目前只有规格，尚未实现）"
       echo "  分层边界检查的对象是实现，不是规格 —— 实现出现后本检查自动生效。"
-      exit 0
+      exit 3 # 同 require_layers：跳过必须能被 run-all-gates 识别，不能混进「通过」
     fi
     [ -d "$DOMAIN" ] || {
       echo "::error::找不到 $DOMAIN（但 $ROOT/src 存在 → 目录结构不符合约定的分层）"

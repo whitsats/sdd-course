@@ -31,21 +31,23 @@
 | 项目 | 产物可读 | 代码可运行 | 门禁可跑 |
 |------|---------|-----------|---------|
 | focuslog | ✅ 8 份 | ✗ **未提交实现**（L05 的教学目标是手工验收，不是写代码） | ✅ 覆盖率 · 分层（无 `src/` 时自动跳过） |
-| taskflow | ✅ 10 份 | ⚠️ **未提交实现**；契约测试是**范式**，不是可执行套件 | ✅ 覆盖率 · 分层 |
+| taskflow | ✅ 10 份 | ⚠️ **API 实现未提交**；但**契约测试可执行**（零依赖，49 个全过 + 1 条故意红的漂移演练） | ✅ 覆盖率 · 分层 · **契约测试** |
 | rulesmith | ✅ 7 份 | ✅ **生成器可跑，67 个测试全过** | ✅ 覆盖率 · 生成物可复现 |
 | billflow | ✅ 9 份 | ✅ **Maven 工程可构建，751 个测试全过** | ✅ 覆盖率 · **编译期规格校验** · ArchUnit 架构检查 · CI |
 | stockflow | ✅ 10 份 | ✅ **零依赖，44 个测试全过（含 40 路并发争抢）** | ✅ 覆盖率 · **数据层强制力（八条裸客户端直写）** · CI |
 
 > ⚠️ **两条必须说清的边界，否则你会误以为自己跑过了什么。**
 
-**① `taskflow` 的契约测试不可执行。** 它们指向一个尚未提交的 API 实现，仓库里没有该项目的
-`package.json`。它们示范的是「把验收标准写成契约测试」的**形状与颗粒度**
-（权限矩阵表格驱动 / 状态机参数化 / 并发写入），不是一套能绿能红的套件。
-真正端到端可跑的是 `rulesmith`、`billflow` 与 `stockflow`。
+**① `taskflow` 的契约测试可执行，但完整 API 实现仍未提交。**
+三份套件（[auth-matrix](taskflow/tests/contract/auth-matrix.spec.ts) / [task-state](taskflow/tests/contract/task-state.spec.ts) / [task-concurrency](taskflow/tests/contract/task-concurrency.spec.ts)）
+跑在 `tests/fixtures/harness.ts`（最小内存实现，零依赖）上，每条规则判定都走领域层 ——
+`node --test` 即可复现，49 个全过。但 routes / repositories / Postgres 不存在，
+**「端到端穿透 HTTP 与数据库」仍然没有对象**。真正端到端可跑的是 `rulesmith`、`billflow` 与 `stockflow`。
 
-**② `taskflow` 的映射表引用了 9 个测试文件，仓库里只提交了 3 个。**
+**② `taskflow` 的映射表引用了 9 个测试文件，仓库里只提交了 4 个，且只有 3 个可执行。**
 这不是疏忽，而是把门禁的边界摆在明面上：`scripts/check-spec-coverage.sh` 校验的是
 **spec ↔ 映射表 的一致性**（条数与编号），**不校验测试文件是否真的存在**。
+第 4 个（drift-drill）是**故意失败**的漂移演练（L07 验收 ②），永远不进门禁。
 
 > 📌 **门禁的覆盖范围，就是它的盲区范围。**
 > 一个全绿的门禁不等于「一切都对」，只等于「它检查的那些事是对的」。
@@ -70,7 +72,7 @@ bash scripts/check-sql-enforcement.sh
 > 💡 缺 JDK/Maven/Node 时 `run-all-gates.sh` 会把对应项计入 **「跳过」并单独列出**，
 > 而不是让它从「通过」里静静消失 —— 跳过不等于通过，这一点在输出里必须看得见。
 
-四个项目当前的实测值：
+五个项目当前的实测值：
 
 | 项目 | 验收标准 | 映射行数 | 一致性 |
 |------|---------|---------|--------|
@@ -91,7 +93,7 @@ bash scripts/check-sql-enforcement.sh
    `notes/L10-边界感.md` 里「**哪些部分我没用它**」的自述。
 4. 学到 L13（可选）→ 读 [billflow](billflow/README.md)。先读
    `docs/adr/ADR-003-金额精度与取整.md`（为什么这么算），再看 `spec-guard/`（怎么让编译器替你守着）。
-   四条元验证的原始输出在 `notes/L13-构建期强制.md`。
+   六条元验证（A–F）的原始输出在 `notes/L13-构建期强制.md`。
 5. 学到 L14（可选）→ 读 [stockflow](stockflow/README.md)。**按这个顺序读**：
    先 `docs/adr/ADR-001`（判据），再 `migrations/001_init.sql`（判据的落地），
    然后 `docs/adr/ADR-002`（这条路的代价 —— 本案例最核心的一篇）。

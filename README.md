@@ -140,7 +140,7 @@ SDD（Spec-Driven Development，规范驱动开发）是对这套问题的系统
 │   │                       / notes：LLM 审阅记录（挖出 3 条真缺口）
 │   ├── taskflow/          项目 B 全套：constitution 级 spec（40 条标准）
 │   │                        / plan（含 3 处范围蔓延对照）/ ADR-002
-│   │                        / 领域层 TS 源码 / 契约测试 / CI 门禁
+│   │                        / 领域层 TS 源码 / 可执行契约测试（49 个，零依赖）/ CI 门禁
 │   │                        / L08 与 L09 的四个 notes / 第二个 feature
 │   ├── rulesmith/         项目 C 全套：spec-as-source
 │   │                        / 生成器（手写层）/ 4 份产物 / 10 条映射
@@ -152,10 +152,11 @@ SDD（Spec-Driven Development，规范驱动开发）是对这套问题的系统
 │                            / migrations/001_init.sql（5 表 · 8 触发器 · 2 视图）
 │                            / tests/schema.spec.mjs（16 个测试**不碰应用代码**）
 │                            / 4 份 ADR / 26 条映射（含「保证者」列）/ 五条元验证
-├── templates/             ← 11 份可直接拷用的模板
+├── templates/             ← 13 份可直接拷用的模板
 │   ├── constitution / spec / plan / tasks / adr / clarify-log
 │   ├── acceptance-record / change-request / notes
 │   ├── PR-template.md     SDD 版 PR 模板（含 spec 同步检查项）
+│   ├── tool-selection / team-rollout-checklist  L12 两份交付物的现成模板
 │   └── agent-prompt-snippets.md  ⭐ 对 agent 说话的可用句式 + 反模式
 ├── scripts/               ← 可直接运行的脚本（均已实测）
 │   ├── run-all-gates.sh         ⭐ 一键跑完全部门禁（课程总验收）
@@ -179,18 +180,21 @@ SDD（Spec-Driven Development，规范驱动开发）是对这套问题的系统
 > ```bash
 > bash scripts/run-all-gates.sh
 > # ① 门禁脚本自身可执行      ✔ ×8          语法检查每一个脚本
-> # ② 验收标准覆盖率          ✔ ×4          focuslog 23 / taskflow 40 / rulesmith 10 / stockflow 26
-> # ③ 分层边界                ✔ ×2          taskflow (ts) / focuslog (py)
+> # ② 验收标准覆盖率          ✔ ×5          focuslog 23 / taskflow 40 / rulesmith 10 / billflow 21 / stockflow 26
+> # ③ 分层边界                ✔ ×1  ○ ×1    taskflow 实查；focuslog 只有规格（无 src/）→ 明确跳过
 > # ④ 生成物可复现性          ✔ rulesmith
-> # ⑤ 测试套件                ✔ ×3          rulesmith 67 / billflow 751 / stockflow 44
+> # ⑤ 测试套件                ✔ ×4          rulesmith 67 / taskflow 49 / billflow 751 / stockflow 44
 > # ⑥ 密钥泄漏自查            ✔
-> # ⑦ 渲染完整性              ✔ 15 个折叠块 + 产物
+> # ⑦ 渲染完整性              ✔ 折叠块写法
 > # ⑧ 文档内部链接            ✔
-> # 总结  通过 22   失败 0   跳过 0   ✅ 全部门禁通过
+> # 总结  通过 23   失败 0   跳过 1
+> # 跳过项：分层：focuslog (py)（examples/focuslog 下没有 src/ 目录（该项目目前只有规格，尚未实现））
+> # ✅ 已跑的门禁全部通过（有 1 项跳过 —— 每一项的原因见上）
 > ```
 >
-> **依赖可选工具链的门禁不会「假装通过」**：缺 JDK/Maven 或 Node 时它们计入
-> **跳过**（单独一行列出），而不是混进「通过 22」里 —— 「没跑」与「跑过了」在输出上必须能区分开。
+> **跳过永远不会混进「通过」里**：缺 JDK/Maven/Node 的门禁计入**跳过**（单独一行列出）；
+> focuslog 的分层检查因为「项目只有规格、还没有实现」也计入跳过 —— 「没跑」与「跑过了」
+> 在输出上必须能区分开（`check-layer-boundary.sh` 用退出码 3 声明跳过）。
 >
 > 也可以单独跑某一个：
 >

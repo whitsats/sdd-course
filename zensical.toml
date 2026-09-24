@@ -68,7 +68,7 @@ nav = [
       { "门禁脚本 × 8 + 规格审阅器" = "scripts/index.md" },
       { "Agnes API 速查（实测）" = "reference/agnes-api.md" },
       { "案例项目设计说明" = "projects/index.md" },
-      { "模板库（11 份，可直接拷用）" = [
+      { "模板库（13 份，可直接拷用）" = [
           "templates/index.md",
           "templates/constitution-template.md",
           "templates/spec-template.md",
@@ -81,6 +81,8 @@ nav = [
           "templates/notes-template.md",
           "templates/agent-prompt-snippets.md",
           "templates/PR-template.md",
+          "templates/tool-selection-template.md",
+          "templates/team-rollout-checklist-template.md",
       ] },
   ] },
   { "完整产物示例（五个项目）" = [

@@ -22,6 +22,8 @@
 | [`notes-template.md`](notes-template.md) | 每节学完后 | 全课程 | 记「最出乎意料的一点」，不记摘要 |
 | [`PR-template.md`](PR-template.md) | 提 PR 时 | L12 | 让 review 能看出「规格改了没」「测试红了没」 |
 | [`agent-prompt-snippets.md`](agent-prompt-snippets.md) | 对 AI agent 下指令时 | 全课程 | 可直接抄的约束句式 + **反面清单** |
+| [`tool-selection-template.md`](tool-selection-template.md) | 团队引入 SDD、要做工具选型时 | L12 | 判据与权重**先于**对比确定 + 分场景建议 + **推翻条件**，防「先有结论再找理由」 |
+| [`team-rollout-checklist-template.md`](team-rollout-checklist-template.md) | 团队化落地启动时 | L12 | 三段时间盒（周 / 月 / 季）+ 每个勾都要有证据 + **预先写下的退出信号** |
 
 ---
 

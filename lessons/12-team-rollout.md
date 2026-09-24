@@ -10,7 +10,11 @@
 > —— 那不是一个示意，而是一份**可以直接拷进 `.github/pull_request_template.md` 的成品**，
 > 含五节内容、三种回答的处置规则、以及**渐进上线的三阶段建议**。
 >
-> 本节 §4 讲的评审流程，落地形式就是它。
+> 另有两份直接对应本节交付物的模板：[`tool-selection-template.md`](../templates/tool-selection-template.md)（对比表，
+> **判据与权重必须先于对比填写**）与 [`team-rollout-checklist-template.md`](../templates/team-rollout-checklist-template.md)（三段时间盒 +
+> 预先写下的退出信号）。§6 的检查清单和 §9 的交付物都以它们为骨架。
+>
+> 本节 §4 讲的评审流程，落地形式就是 PR 模板。
 
 ---
 

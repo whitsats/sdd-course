@@ -5,7 +5,7 @@
 | **时长** | 120 min（含实操通常 4 h） |
 | **前置** | L09（你已经在项目 B 里体会过"测试 + CI"这一级强制力） |
 | **案例** | 项目 D · [billflow](../examples/billflow/README.md)（Java 17 · Maven 多模块） |
-| **产出** | 一个"规格违背就编译不过"的工程 + 四条元验证记录 |
+| **产出** | 一个"规格违背就编译不过"的工程 + 六条元验证记录（A–F） |
 | **验收** | ① `mvn verify` 全绿 ② 注入未知规格编号 → **编译失败** ③ 让 domain 依赖被禁类型 → **架构测试失败** ④ 你能说清这套约束**不该**用在什么场合 |
 
 > 📁 **本节的完整参考产出**（全部实测跑过）：
@@ -17,7 +17,7 @@
 > | 精度与取整的取舍记录 | [`examples/billflow/docs/adr/ADR-003-金额精度与取整.md`](../examples/billflow/docs/adr/ADR-003-金额精度与取整.md) |
 > | 21 条标准 ↔ 测试映射 | [`examples/billflow/docs/验收标准-测试映射.md`](../examples/billflow/docs/验收标准-测试映射.md) |
 > | 编译期守卫（注解处理器） | [`examples/billflow/spec-guard/`](../examples/billflow/spec-guard) |
-> | 真实运行输出与四条元验证 | [`examples/billflow/notes/L13-构建期强制.md`](../examples/billflow/notes/L13-构建期强制.md) |
+> | 真实运行输出与六条元验证 | [`examples/billflow/notes/L13-构建期强制.md`](../examples/billflow/notes/L13-构建期强制.md) |
 
 ---
 
@@ -437,7 +437,7 @@ dependency.getTargetClass().getName()       // 目标类要走这一步
 **交付物**：
 
 - 一个 Maven 多模块工程，`mvn verify` 全绿（含编译期规格校验、架构检查、测试）
-- 四条元验证的真实现象记录
+- 六条元验证（A–F）的真实现象记录
 
 **验收标准**：
 
