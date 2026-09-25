@@ -1,6 +1,6 @@
 # 工具脚本：把「判据」从人脑搬进 CI
 
-这里的 10 个脚本不是示例代码，是**能直接接进 CI 的工具**。它们存在的唯一理由是：
+这里的 11 个脚本不是示例代码，是**能直接接进 CI 的工具**。它们存在的唯一理由是：
 
 > **规格的约束力不来自文档写得多好，而来自偏离时会不会有人报警。**
 
@@ -26,6 +26,7 @@ bash scripts/run-all-gates.sh --quiet
 | `check-sql-enforcement.sh` | 约束是否真的生效（**不经过应用**的八条直写） | L14 |
 | `agnes-review.py` | 规格的对抗式外部审阅 | L06 |
 | `generate-evals.py` | 把验收标准变成评测卡（逐条判定，与 agnes-review 横向互补） | L15 |
+| `check-error-codes.py` | 错误码投影：实现不得发明 spec 里没有的错误码（机器可读规格层） | L07 / L16 |
 
 **这些脚本全部实测跑过**——包括**故意制造违规确认它们真的会红**。原因见下面「元验证」一节：一个不会红的门禁不是门禁，是仪式。
 
@@ -258,6 +259,25 @@ python scripts/generate-evals.py examples/focuslog --out notes/L15-evals.jsonl
 - 与 `check-spec-coverage.sh` 用**同一套行判据**：两个工具对「什么是一条标准」只有一种理解。卡数对不上覆盖率实测值 = 行格式有问题。
 - 与 `agnes-review.py` 方向相反：后者**横向**读全文找矛盾（L06），本脚本**纵向**逐条对照行为（L15）。先横向再纵向。
 - ⚠️ **评测不是门禁**：判定有方差，永远不进 CI。确定性的检查才配当门禁（AP-18 / AP-29 的另一半）。
+
+---
+
+## `check-error-codes.py` — 错误码投影门禁
+
+spec 的「边界条件汇总」表是人读的；实现里散落的 `'CONFLICT'` 是机器写的。两个表示会漂移，而**实现顺手发明一个 spec 里没有的错误码**时，没有任何测试会红 —— 错误路径通常没人断言到那么细。
+
+```bash
+python scripts/check-error-codes.py examples/taskflow
+# spec 错误码：13 个    实现引用：10 个    扫描：2 个目录
+# ✅ 实现引用的每个错误码都能在 spec 里指回标准
+
+python scripts/check-error-codes.py examples/taskflow --json   # 机器可读投影：code → 标准编号
+```
+
+- **刻意单向**：只查「实现引用 ⊆ spec 声明」。反向不查 —— spec 声明了完整 API 的码，实现可能尚未提交（taskflow 的已知边界），查了会红在本该绿的地方。
+- **实测案例**：harness 在未知路由上曾返回自造的 `NOT_FOUND` —— 接上这道门禁抓出的第一件事就是它（现改为不带错误码的 404）。
+- **元验证**：在临时目录写一个 spec 没有的 `SILENT_GHOST` → 必须红。
+- `--json` 的投影（code → 标准编号列表）就是 spec 的机器可读表示，L16 的生产探针直接拿它当数据源。
 
 ---
 

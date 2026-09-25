@@ -106,10 +106,14 @@ done
 
 # ══════════════════════════════════════════════════════════════════════════
 # 分层边界 —— 把宪法的架构条款从 code review 变成机械检查（L02）
+# 错误码投影 —— 机器可读规格层：实现不得发明 spec 里没有的错误码（L07 §7）
 # ══════════════════════════════════════════════════════════════════════════
-head "③ 分层边界"
+head "③ 分层边界与机器可读投影"
 gate "分层：taskflow (ts)"  bash scripts/check-layer-boundary.sh examples/taskflow ts
 gate "分层：focuslog (py)"  bash scripts/check-layer-boundary.sh examples/focuslog py
+# 刻意单向：spec 声明了完整 API 的错误码，本仓库只提交了领域层 —— 反向查会红在本该绿的地方。
+gate_soft "错误码投影：taskflow（自造码即红）" python \
+  python scripts/check-error-codes.py examples/taskflow --impl examples/taskflow/src --impl examples/taskflow/tests
 
 # ══════════════════════════════════════════════════════════════════════════
 # 生成物一致性 —— spec-as-source 的机械守卫（L10）

@@ -18,7 +18,7 @@
 
 [project]
 site_name = "SDD 实战精修课"
-site_description = "从 vibe coding 到规格驱动 —— 16 节讲义 + 5 个递进案例 + 全部真实产物"
+site_description = "从 vibe coding 到规格驱动 —— 17 节讲义 + 5 个递进案例 + 全部真实产物"
 site_url = "https://whitsats.github.io/sdd-course/"
 repo_url = "https://github.com/whitsats/sdd-course"
 repo_name = "whitsats/sdd-course"
@@ -64,6 +64,9 @@ nav = [
   { "八 · 可选进阶（Eval · 把规格变成考卷）" = [
       { "15 把验收标准变成评测集 ★" = "lessons/15-spec-evals.md" },
   ] },
+  { "九 · 可选进阶（Runtime · 上线之后）" = [
+      { "16 让规格在生产里活着 ★" = "lessons/16-runtime-spec.md" },
+  ] },
   { "参考" = [
       { "EARS 句式速查" = "reference/ears.md" },
       { "术语表 · 中英对照" = "reference/glossary.md" },
@@ -71,7 +74,7 @@ nav = [
       { "门禁脚本 × 8 + 规格审阅器" = "scripts/index.md" },
       { "Agnes API 速查（实测）" = "reference/agnes-api.md" },
       { "案例项目设计说明" = "projects/index.md" },
-      { "模板库（13 份，可直接拷用）" = [
+      { "模板库（14 份，可直接拷用）" = [
           "templates/index.md",
           "templates/constitution-template.md",
           "templates/spec-template.md",
@@ -86,6 +89,7 @@ nav = [
           "templates/PR-template.md",
           "templates/tool-selection-template.md",
           "templates/team-rollout-checklist-template.md",
+          "templates/spec-governance-template.md",
       ] },
   ] },
   { "完整产物示例（五个项目）" = [

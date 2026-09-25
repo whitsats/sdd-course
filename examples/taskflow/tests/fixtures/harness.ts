@@ -250,7 +250,10 @@ export async function makeHarness(): Promise<Harness> {
       return respond(200, { id: projectId, members: [memberId] });
     }
 
-    return respond(404, { code: 'NOT_FOUND' });
+    // ⛔ 未定义路由不在规格内：不携带任何错误码。
+    // 错误码必须能指回 spec §6（scripts/check-error-codes.py 会强制这一条）——
+    // 实现不得发明 spec 里没有的错误码。这里曾有自造的 NOT_FOUND，被该门禁抓出后改正。
+    return respond(404, {});
   }
 
   async function request(

@@ -1,7 +1,7 @@
 # SDD 实战精修课 —— 从 vibe coding 到规格驱动
 
 > 一条主线：**GitHub Spec Kit**。五个案例：三个递进的严谨度等级，加上两根约束轴 —— **约束能放在多早**、**多晚**，
-> 再加一节可选的评测课 —— **把规格变成 agent 的考卷**。
+> 再加两节可选课 —— **把规格变成 agent 的考卷**、**让规格在生产里活着**。
 > 目标不是学会打几个斜杠命令，而是**把「写清楚要什么」变成你最值钱的工程能力**。
 
 ---
@@ -36,6 +36,7 @@ SDD（Spec-Driven Development，规范驱动开发）是对这套问题的系统
 | 5 | 能推动团队落地 | 一份可执行的团队落地检查清单 |
 | 6 | 能做「规格即源」实验 | 项目 C 中你只改 spec，代码全量再生 |
 | 7 | 能把规格变成评测集 | 项目 A 的 23 条标准生成 23 张判定卡，逐条可重放 |
+| 8 | 能判断哪些规格值得上生产探针 | 一份按三条判据筛选的探针清单，每条都回答「半夜响了谁起床」 |
 
 **不承诺**：让 AI 完全自动写完后端。SDD 不消除工程判断，它把判断从「写代码」前移到「定意图」。
 
@@ -43,13 +44,13 @@ SDD（Spec-Driven Development，规范驱动开发）是对这套问题的系统
 
 ## 3. 学习地图
 
-七个阶段、16 节课（含三节可选进阶），每节 **1–2 小时**，每节都有可提交的产出物。
+八个阶段、17 节课（含四节可选进阶），每节 **1–2 小时**，每节都有可提交的产出物。
 
-> ⏱️ **时间预算分两层，别用错**：跟着教程走一遍约 **30 小时**；
-> 五个项目都能端到端演示约 **60 小时**——差出来的 30 小时全在写代码、跑测试、跟 CI 打架上，**而那才是真正的价值所在**。
+> ⏱️ **时间预算分两层，别用错**：跟着教程走一遍约 **31 小时**；
+> 五个项目都能端到端演示约 **62 小时**——差出来的 31 小时全在写代码、跑测试、跟 CI 打架上，**而那才是真正的价值所在**。
 > 时间不够时的减法优先级见 [PLAN.md 附录](./PLAN.md)。
 
-> 🔍 **计划经过三轮审阅修订（v2 修四个结构性缺陷、v3 加 L13/L14 两根约束轴、v4 补 L15 评测集）**。
+> 🔍 **计划经过四轮审阅修订（v2 修四个结构性缺陷、v3 加 L13/L14 两根约束轴、v4 补 L15 评测集、v5 补 L16 运行期与治理台账）**。
 > 修订记录见 [PLAN.md 末尾](./PLAN.md)。
 > 这件事本身也是课程的一部分：**规划也需要被审阅，不只是代码。**
 
@@ -76,6 +77,9 @@ SDD（Spec-Driven Development，规范驱动开发）是对这套问题的系统
                                               │
 阶段七 · 可选进阶（1 节）                      │  复用项目 A focuslog 的规格
   L15 把验收标准变成评测集 ⭐**可选**
+                                              │
+阶段八 · 可选进阶（1 节）                      │  复用项目 E 巡检 + 项目 B 错误码投影
+  L16 让规格在生产里活着 ⭐**可选**
 ```
 
 ⭐ **L09 是本课程的价值拐点**。走到那里，你就真正拥有了 spec-anchored 闭环——绝大多数团队宣称在做 SDD，实际停在 L05 的水平。
@@ -108,7 +112,7 @@ SDD（Spec-Driven Development，规范驱动开发）是对这套问题的系统
 > | 检查它是否兑现 | `check-java-build.sh` 断言标记行 | `assertForeignKeys()` 读回断言 |
 
 外加两个非项目练习：**L11 存量代码逆向补规格**（brownfield，最贴近你真实工作）与 **L12 团队流程设计**；
-另有一节可选的 **L15 评测课**，复用项目 A 的规格，不新建项目。
+另有两节可选课：**L15 评测课**（复用项目 A 的规格）与 **L16 运行期课**（复用项目 E 的巡检与项目 B 的错误码投影），不新建项目。
 
 选型理由与功能边界见 **[projects/README.md](./projects/README.md)**。
 
@@ -119,8 +123,8 @@ SDD（Spec-Driven Development，规范驱动开发）是对这套问题的系统
 ```
 .
 ├── README.md              ← 你在这里（课程主页）
-├── PLAN.md                ← 详细学习计划：16 节全展开
-├── lessons/               ← 教程正文，16 节全部就绪（16 个文件 / 6500+ 行）
+├── PLAN.md                ← 详细学习计划：17 节全展开
+├── lessons/               ← 教程正文，17 节全部就绪（17 个文件 / 6800+ 行）
 │   ├── 00-setup.md        环境准备与首次 specify init
 │   ├── 01-why-sdd.md      SDD 心智模型、三级成熟度、流水线全景
 │   ├── 02-constitution.md 项目宪法怎么写
@@ -136,7 +140,8 @@ SDD（Spec-Driven Development，规范驱动开发）是对这套问题的系统
 │   ├── 12-team-rollout.md 团队化落地、选型与退出策略
 │   ├── 13-java-build-time.md ⭐ 可选：把约束前移到构建期
 │   ├── 14-data-layer-constraints.md ⭐ 可选：把约束下沉到数据层
-│   └── 15-spec-evals.md   ⭐ 可选：把验收标准变成评测集
+│   ├── 15-spec-evals.md   ⭐ 可选：把验收标准变成评测集
+│   └── 16-runtime-spec.md ⭐ 可选：让规格在生产里活着
 ├── reference/             ← 随时查阅的速查手册
 │   ├── ears.md            EARS 需求句式（写验收标准的语法）
 │   ├── glossary.md        中英术语对照
@@ -160,11 +165,11 @@ SDD（Spec-Driven Development，规范驱动开发）是对这套问题的系统
 │                            / migrations/001_init.sql（5 表 · 8 触发器 · 2 视图）
 │                            / tests/schema.spec.mjs（16 个测试**不碰应用代码**）
 │                            / 4 份 ADR / 26 条映射（含「保证者」列）/ 五条元验证
-├── templates/             ← 13 份可直接拷用的模板
+├── templates/             ← 14 份可直接拷用的模板
 │   ├── constitution / spec / plan / tasks / adr / clarify-log
 │   ├── acceptance-record / change-request / notes
 │   ├── PR-template.md     SDD 版 PR 模板（含 spec 同步检查项）
-│   ├── tool-selection / team-rollout-checklist  L12 两份交付物的现成模板
+│   ├── tool-selection / team-rollout-checklist / spec-governance  L12 的选型、落地与台账模板
 │   └── agent-prompt-snippets.md  ⭐ 对 agent 说话的可用句式 + 反模式
 ├── scripts/               ← 可直接运行的脚本（均已实测）
 │   ├── run-all-gates.sh         ⭐ 一键跑完全部门禁（课程总验收）
@@ -176,7 +181,8 @@ SDD（Spec-Driven Development，规范驱动开发）是对这套问题的系统
 │   ├── check-java-build.sh      构建绿 ≠ 规格校验执行过（项目 D）
 │   ├── check-sql-enforcement.sh 约束是否真的生效（项目 E）
 │   ├── agnes-review.py          用 LLM 对规格做对抗式审阅
-│   └── generate-evals.py        把验收标准变成评测卡（L15）
+│   ├── generate-evals.py        把验收标准变成评测卡（L15）
+│   └── check-error-codes.py     错误码投影：自造码即红（L07 / L16）
 └── projects/
     └── README.md          五个案例项目的设计说明
 ```
@@ -190,13 +196,13 @@ SDD（Spec-Driven Development，规范驱动开发）是对这套问题的系统
 > bash scripts/run-all-gates.sh
 > # ① 门禁脚本自身可执行      ✔ ×8          语法检查每一个脚本
 > # ② 验收标准覆盖率          ✔ ×5          focuslog 23 / taskflow 40 / rulesmith 10 / billflow 21 / stockflow 26
-> # ③ 分层边界                ✔ ×1  ○ ×1    taskflow 实查；focuslog 只有规格（无 src/）→ 明确跳过
+> # ③ 分层与投影              ✔ ×2  ○ ×1    taskflow 分层 + 错误码投影；focuslog 分层跳过（无实现）
 > # ④ 生成物可复现性          ✔ rulesmith
 > # ⑤ 测试套件                ✔ ×4          rulesmith 67 / taskflow 49 / billflow 751 / stockflow 44
 > # ⑥ 密钥泄漏自查            ✔
 > # ⑦ 渲染完整性              ✔ 折叠块写法
 > # ⑧ 文档内部链接            ✔
-> # 总结  通过 23   失败 0   跳过 1
+> # 总结  通过 24   失败 0   跳过 1
 > # 跳过项：分层：focuslog (py)（examples/focuslog 下没有 src/ 目录（该项目目前只有规格，尚未实现））
 > # ✅ 已跑的门禁全部通过（有 1 项跳过 —— 每一项的原因见上）
 > ```
@@ -258,6 +264,7 @@ SDD（Spec-Driven Development，规范驱动开发）是对这套问题的系统
 | **L13**（可选） | 约束前移到构建期 | 注入未知编号 → **编译失败** | ☐ |
 | **L14**（可选） | 约束下沉到数据层 | 命令行直写脏数据 → **被引擎拒绝** | ☐ |
 | **L15**（可选） | 规格变评测集 | 23 张判定卡 + 一轮翻转记录 | ☐ |
+| **L16**（可选） | 上线之后的规格 | 探针清单 + flag 对账 | ☐ |
 
 ---
 

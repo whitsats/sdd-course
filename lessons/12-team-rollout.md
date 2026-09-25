@@ -10,9 +10,10 @@
 > —— 那不是一个示意，而是一份**可以直接拷进 `.github/pull_request_template.md` 的成品**，
 > 含五节内容、三种回答的处置规则、以及**渐进上线的三阶段建议**。
 >
-> 另有两份直接对应本节交付物的模板：[`tool-selection-template.md`](../templates/tool-selection-template.md)（对比表，
-> **判据与权重必须先于对比填写**）与 [`team-rollout-checklist-template.md`](../templates/team-rollout-checklist-template.md)（三段时间盒 +
-> 预先写下的退出信号）。§6 的检查清单和 §9 的交付物都以它们为骨架。
+> 另有三份团队级模板：[`tool-selection-template.md`](../templates/tool-selection-template.md)（对比表，
+> **判据与权重必须先于对比填写**）、[`team-rollout-checklist-template.md`](../templates/team-rollout-checklist-template.md)（三段时间盒 +
+> 预先写下的退出信号）与 [`spec-governance-template.md`](../templates/spec-governance-template.md)（规格台账，见 §2 末）。
+> §6 的检查清单和 §9 的交付物以前两份为骨架。
 >
 > 本节 §4 讲的评审流程，落地形式就是 PR 模板。
 
@@ -92,6 +93,21 @@ Kiro 和 Cursor 把一些护栏做进产品里；Spec Kit 给你模板和流程�
 多个 agent 长期并行后，宪法可能出现「每个 agent 都以为别人知道」的空洞。**每个迭代做一次宪法 review**——任何一条已经不再被遵守的，要么恢复执行，要么正式删掉。
 
 **留着一条名存实亡的宪法条款，比没有这条更糟**——它会让 agent 在矛盾中随机选择（[AP-4](../reference/anti-patterns.md)）。
+
+### 规格台账：spec 多了之后怎么办
+
+交接契约解决「一次交接」；台账解决「长期共存」。spec 超过三份、或跨仓库、
+或多个 agent 长期并行之后，必然出现三种**没人主动回答**的问题：这份规格归谁？
+它还活着吗？谁在消费它？[`spec-governance-template.md`](../templates/spec-governance-template.md)
+用一张表回答它们，其中最容易被忽略的两条规则：
+
+- **owner 是人名，不是团队名。**「平台组拥有」等于没人拥有——出问题时你要的是
+  一个能叫醒的人，不是一张 org chart。
+- **deprecated 不删除。** 标状态、留指针（「被 XXX 取代」）——删除历史等于销毁证据。
+
+> ⚠️ 台账本身也是文档，也会腐化。它的门禁是复审周期：过期未复审的行自动视为可疑。
+> 反过来，spec 少于三份时**不要**建台账——`specs/` 目录本身就是台账，
+> 多一层表只会多一处不同步（与 AP-3 同类的错误：把约束写成没人看的文档）。
 
 ---
 

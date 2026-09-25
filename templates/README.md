@@ -24,6 +24,7 @@
 | [`agent-prompt-snippets.md`](agent-prompt-snippets.md) | 对 AI agent 下指令时 | 全课程 | 可直接抄的约束句式 + **反面清单** |
 | [`tool-selection-template.md`](tool-selection-template.md) | 团队引入 SDD、要做工具选型时 | L12 | 判据与权重**先于**对比确定 + 分场景建议 + **推翻条件**，防「先有结论再找理由」 |
 | [`team-rollout-checklist-template.md`](team-rollout-checklist-template.md) | 团队化落地启动时 | L12 | 三段时间盒（周 / 月 / 季）+ 每个勾都要有证据 + **预先写下的退出信号** |
+| [`spec-governance-template.md`](spec-governance-template.md) | spec 超过三份 / 多仓库 / 多 agent 并行时 | L12 | 一张表回答「归谁、还活着吗、谁在消费」；**owner 是人名不是团队名**，deprecated 不删除 |
 
 ---
 
